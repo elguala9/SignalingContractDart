@@ -1,0 +1,38 @@
+{
+  "name": "signaling-contract",
+  "version": "1.0.0",
+  "description": "contract that should replace a signaling server",
+  "keywords": [
+    "signlaing"
+  ],
+  "author": "Luca Gualandi <lgualandi@omniagroup.it>",
+  "homepage": "https://github.com/elguala9/InterfaceErmes/tree/main/packages/signaling-contract#readme",
+  "license": "LGPL-3.0-or-later",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/elguala9/Ermes.git"
+  },
+  "scripts": {
+    "build": "npm run build:contracts && npm run build:dart && npm run validate",
+    "build:contracts": "hardhat compile && node scripts/fix-typechain-index.js",
+    "build:typechain": "hardhat compile && node scripts/fix-typechain-index.js",
+    "build:dart": "node scripts/generate-dart-bindings.js",
+    "validate": "node scripts/validate-bindings.js",
+    "deploySC": "hardhat run ./ignition/modules/DeploySignaling.ts --network localhost",
+    "deploySC:ganache": "hardhat run ./ignition/modules/DeploySignaling.ts --network ganache",
+    "network": "npx hardhat node",
+    "clean": "hardhat clean && rm -rf ../../../packages/contract_sdk/lib/generated/*"
+  },
+  "bugs": {
+    "url": "https://github.com/elguala9/Ermes/issues"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "hardhat": "^2.24.2"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts-upgradeable": "^5.3.0",
+    "@openzeppelin/hardhat-upgrades": "^3.9.0",
+    "concurrently": "^9.1.2"
+  }
+}

@@ -48,14 +48,12 @@ class SignalingContract {
   }) async {
     final client = Web3Client(rpcUrl, Client());
     
-    final contractAbiObj = ContractAbi.fromJson(contractAbi, 'Signaling');
-    
     final transaction = Transaction(
       from: credentials.address,
       data: hexToBytes(contractBytecode),
     );
 
-    final txHash = await client.sendTransaction(credentials, transaction);
+    await client.sendTransaction(credentials, transaction);
     
     // Note: In a real implementation, you'd wait for the transaction receipt
     // and get the contract address from there

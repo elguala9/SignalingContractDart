@@ -1,5 +1,5 @@
-name: contract_sdk
-description: Dart SDK for interacting with blockchain smart contracts using web3dart. Auto-generated bindings for Solidity contracts compiled with Hardhat and TypeChain.
+name: signaling_contract_sdk
+description: Dart SDK for interacting with blockchain signaling smart contract.
 version: 1.0.0
 homepage: https://github.com/gualandi/parresia-contract
 repository: https://github.com/gualandi/parresia-contract

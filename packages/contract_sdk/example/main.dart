@@ -1,16 +1,12 @@
 import 'dart:typed_data';
 import 'package:web3dart/web3dart.dart';
-import 'package:contract_sdk/generated/signaling_contract.dart';
+import 'package:signaling_contract_sdk/generated/signaling_contract.dart';
 import 'package:http/http.dart' as http;
 
 /// Example demonstrating how to use the auto-generated contract bindings
 void main() async {
   // Configuration for Ganache (from docker-compose)
   const rpcUrl = 'http://localhost:7545';
-  const chainId = 1337;
-  
-  // Using the test mnemonic from docker-compose
-  const mnemonic = 'test test test test test test test test test test test junk';
   
   print('🔗 Contract SDK Example with Auto-Generated Bindings');
   print('');
@@ -29,8 +25,8 @@ void main() async {
     final client = Web3Client(rpcUrl, http.Client());
     
     // Check connection
-    final chainId = await client.getChainId();
-    print('✅ Connected to Ganache - Chain ID: $chainId');
+    final chainIdValue = await client.getChainId();
+    print('✅ Connected to Ganache - Chain ID: $chainIdValue');
     print('');
     
     // Connect to existing Signaling contract
@@ -127,3 +123,4 @@ Future<EthereumAddress> deploySignalingContract({
     rethrow;
   }
 }
+

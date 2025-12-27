@@ -28,7 +28,7 @@ const config: HardhatUserConfig = {
       gasPrice: 1000000000 // 1 gwei
     },
     ganache: {
-      url: "http://127.0.0.1:8545",
+      url: "http://127.0.0.1:7545",
       chainId: 1337,
       accounts: {
         mnemonic: "test test test test test test test test test test test junk",
@@ -37,7 +37,6 @@ const config: HardhatUserConfig = {
         count: 20
       },
       gas: "auto",
-      gasPrice: 0, // Come configurato nel docker-compose
       timeout: 20000
     }
   }

@@ -10,8 +10,7 @@ services:
       - --defaultBalanceEther=10000
       - --accounts=20
       - --chain.chainId=1337
-      - --hardfork=london
-      - --gasPrice=0
+      - --hardfork=shanghai
     environment:
       - GANACHE_DETERMINISTIC=true
     networks:

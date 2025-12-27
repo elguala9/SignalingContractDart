@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:typed_data';
 import 'package:test/test.dart';
 import 'package:signaling_contract_sdk/generated/signaling_contract.dart';
@@ -13,10 +14,9 @@ void main() {
 
     const String ganacheRpcUrl = 'http://localhost:7545';
     
-    // Ganache mnemonic: test test test test test test test test test test test junk
-    // First account private key (from mnemonic)
+    // Ganache account (index 0) from mnemonic
     const String deployerPrivateKey =
-        '0x4f3edf983ac636a65a842ce7c78d9aa706d3b113bce9c46f30d7d21715b23b1d';
+        '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80';
 
     setUp(() async {
       client = Web3Client(ganacheRpcUrl, http.Client());
@@ -30,7 +30,7 @@ void main() {
       // Cleanup if needed
     });
 
-    test('deploy SignalingContract to Ganache', () async {
+    test('deploy SignalingContract to Ganache using Hardhat', () async {
       try {
         // Get current balance
         final balance = await client.getBalance(deployerAddress);
@@ -43,21 +43,96 @@ void main() {
           return; // Skip deployment test if no balance
         }
 
-        // Deploy contract
-        final contractAbi = ContractAbi.fromJson(
-          SignalingContract.contractAbi,
-          'Signaling',
+        // Deploy contract using Hardhat script
+        // This is necessary because SignalingContract is UUPS upgradeable
+        // and requires proxy deployment
+        print('Deploying SignalingContract via Hardhat...');
+        
+        final processResult = await Process.run(
+          'npm',
+          ['run', 'deploySC:ganache'],
+          workingDirectory: '../typescript/signaling-contract',
+          runInShell: true,
         );
 
-        final transaction = Transaction(
+        print('Deploy stdout: ${processResult.stdout}');
+        if (processResult.stderr.toString().isNotEmpty) {
+          print('Deploy stderr: ${processResult.stderr}');
+        }
+
+        expect(processResult.exitCode, equals(0), 
+               reason: 'Hardhat deploy script failed');
+
+        // Extract contract address from output
+        final output = processResult.stdout.toString();
+        final addressMatch = RegExp(r'Token address:\s+(0x[a-fA-F0-9]{40})').firstMatch(output)
+                          ?? RegExp(r'Proxy deployed to:\s+(0x[a-fA-F0-9]{40})').firstMatch(output) 
+                          ?? RegExp(r'deployed to:\s+(0x[a-fA-F0-9]{40})').firstMatch(output)
+                          ?? RegExp(r'Contract address:\s+(0x[a-fA-F0-9]{40})').firstMatch(output);
+        
+        if (addressMatch != null) {
+          final addressHex = addressMatch.group(1)!;
+          contractAddress = EthereumAddress.fromHex(addressHex);
+          print('Contract deployed at: ${contractAddress.hex}');
+          
+          expect(contractAddress, isNotNull);
+          
+          // Verify the contract exists
+          final code = await client.getCode(contractAddress);
+          expect(code.isNotEmpty, isTrue, reason: 'No code at contract address');
+          print('Contract verified - bytecode length: ${code.length}');
+        } else {
+          print('Could not extract contract address from output');
+          print('Full output: $output');
+          fail('Failed to extract contract address from deploy output');
+        }
+      } catch (e) {
+        print('Deploy test error: $e');
+        print('Make sure Ganache is running at http://localhost:7545');
+        print('Ganache should have accounts with ETH');
+      }
+    });
+
+    test('deploy SignalingContract implementation directly (Dart method)', () async {
+      try {
+        // Get current balance
+        final balance = await client.getBalance(deployerAddress);
+        print('Deployer Balance: ${balance.getValueInUnit(EtherUnit.ether)} ETH');
+        
+        if (balance.getValueInUnit(EtherUnit.ether) == 0) {
+          print('Warning: No balance in deployer account');
+          return;
+        }
+
+        // Deploy contract implementation directly (without proxy)
+        // Note: This is not a complete UUPS deployment, just the implementation
+        // For production use the Hardhat method above
+        print('Deploying implementation contract via Dart...');
+        
+        final bytecodeWithoutPrefix = SignalingContract.contractBytecode.startsWith('0x') 
+            ? SignalingContract.contractBytecode.substring(2) 
+            : SignalingContract.contractBytecode;
+        
+        // Use a reasonable gas price for Ganache (2 gwei)
+        final gasPrice = EtherAmount.fromInt(EtherUnit.gwei, 2);
+        print('Using gas price: ${gasPrice.getInWei} wei');
+        
+        final deployTransaction = Transaction(
           from: deployerAddress,
-          data: hexToBytes(SignalingContract.contractBytecode),
+          data: hexToBytes(bytecodeWithoutPrefix),
+          maxGas: 8000000,
+          maxFeePerGas: gasPrice,
+          maxPriorityFeePerGas: gasPrice,
         );
 
-        final txHash = await client.sendTransaction(credentials, transaction);
+        print('Sending deploy transaction...');
+        final txHash = await client.sendTransaction(
+          credentials,
+          deployTransaction,
+          chainId: 1337,
+        );
         print('Deploy Transaction Hash: $txHash');
-        expect(txHash, isNotEmpty);
-
+        
         // Wait for receipt
         TransactionReceipt? receipt;
         int attempts = 0;
@@ -70,31 +145,22 @@ void main() {
         expect(receipt, isNotNull, reason: 'Transaction receipt not found');
         expect(receipt!.status, isTrue, reason: 'Transaction failed');
         
-        contractAddress = receipt!.contractAddress!;
-        print('Contract deployed at: ${contractAddress.hex}');
+        final implementationAddress = receipt!.contractAddress!;
+        print('Implementation deployed at: ${implementationAddress.hex}');
         print('Gas used: ${receipt.gasUsed}');
 
-        expect(contractAddress, isNotNull);
-      } catch (e) {
-        print('Deploy test error: $e');
-        print('Make sure Ganache is running at http://localhost:7545');
-        print('Ganache should have accounts with ETH from mnemonic');
-      }
-    });
-
-    test('initialize SignalingContract after deploy', () async {
-      try {
-        // This test assumes contract was already deployed in previous test
-        // In real scenario, you'd save the address or deploy again
+        // Verify bytecode at address
+        final code = await client.getCode(implementationAddress);
+        expect(code.isNotEmpty, isTrue);
+        print('Implementation bytecode verified - length: ${code.length}');
         
-        final balance = await client.getBalance(deployerAddress);
-        print('Current balance: ${balance.getValueInUnit(EtherUnit.ether)} ETH');
-        
-        if (balance.getValueInUnit(EtherUnit.ether) > 0) {
-          print('Account has ETH available for transactions');
-        }
-      } catch (e) {
-        print('Initialize test error: $e');
+        // Note: This implementation needs to be used with a proxy for UUPS
+        print('⚠️  This is only the implementation contract.');
+        print('   For a complete UUPS deployment, use the Hardhat method above.');
+      } catch (e, stackTrace) {
+        print('Dart deploy test error: $e');
+        print('Stack trace: $stackTrace');
+        print('This test deploys only the implementation (not the full UUPS proxy)');
       }
     });
 

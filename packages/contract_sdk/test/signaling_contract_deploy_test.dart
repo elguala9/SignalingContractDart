@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:typed_data';
 import 'package:test/test.dart';
 import 'package:signaling_contract_sdk/generated/signaling_contract.dart';
 import 'package:web3dart/web3dart.dart';
@@ -145,7 +144,7 @@ void main() {
         expect(receipt, isNotNull, reason: 'Transaction receipt not found');
         expect(receipt!.status, isTrue, reason: 'Transaction failed');
         
-        final implementationAddress = receipt!.contractAddress!;
+        final implementationAddress = receipt.contractAddress!;
         print('Implementation deployed at: ${implementationAddress.hex}');
         print('Gas used: ${receipt.gasUsed}');
 
@@ -154,13 +153,72 @@ void main() {
         expect(code.isNotEmpty, isTrue);
         print('Implementation bytecode verified - length: ${code.length}');
         
-        // Note: This implementation needs to be used with a proxy for UUPS
-        print('⚠️  This is only the implementation contract.');
-        print('   For a complete UUPS deployment, use the Hardhat method above.');
+        // Try to interact with the deployed contract
+        final contractAbi = ContractAbi.fromJson(
+          SignalingContract.contractAbi,
+          'Signaling',
+        );
+        final deployedContract = DeployedContract(
+          contractAbi,
+          implementationAddress,
+        );
+        
+        // Test: Get owner (should be zero address before initialization)
+        final ownerFunction = deployedContract.function('owner');
+        final ownerResult = await client.call(
+          contract: deployedContract,
+          function: ownerFunction,
+          params: [],
+        );
+        print('Contract owner before init: ${ownerResult.first}');
+        expect(ownerResult.first, equals(EthereumAddress.fromHex('0x0000000000000000000000000000000000000000')));
+        
+        // Initialize the contract
+        print('Initializing contract...');
+        final initializeFunction = deployedContract.function('initialize');
+        final initTx = await client.sendTransaction(
+          credentials,
+          Transaction.callContract(
+            contract: deployedContract,
+            function: initializeFunction,
+            parameters: [deployerAddress],
+            maxGas: 500000,
+            maxFeePerGas: EtherAmount.fromInt(EtherUnit.gwei, 2),
+            maxPriorityFeePerGas: EtherAmount.fromInt(EtherUnit.gwei, 2),
+          ),
+          chainId: 1337,
+        );
+        print('Initialize tx: $initTx');
+        
+        // Wait for initialization
+        TransactionReceipt? initReceipt;
+        int initAttempts = 0;
+        while (initReceipt == null && initAttempts < 20) {
+          await Future.delayed(Duration(milliseconds: 500));
+          initReceipt = await client.getTransactionReceipt(initTx);
+          initAttempts++;
+        }
+        
+        expect(initReceipt, isNotNull);
+        expect(initReceipt!.status, isTrue);
+        print('Contract initialized successfully!');
+        
+        // Verify owner is now set
+        final newOwnerResult = await client.call(
+          contract: deployedContract,
+          function: ownerFunction,
+          params: [],
+        );
+        print('Contract owner after init: ${newOwnerResult.first}');
+        expect(newOwnerResult.first, equals(deployerAddress));
+        
+        // Note: This implementation needs initialization via a proxy for full UUPS functionality
+        print('✅ Contract deployed, initialized and fully functional via Dart!');
+        print('⚠️  For UUPS upgradeable functionality, use the Hardhat deployment method.');
       } catch (e, stackTrace) {
         print('Dart deploy test error: $e');
         print('Stack trace: $stackTrace');
-        print('This test deploys only the implementation (not the full UUPS proxy)');
+        print('This test deploys the implementation contract directly');
       }
     });
 

@@ -1,10 +1,9 @@
 name: signaling_contract_sdk
-description: Dart SDK for interacting with blockchain signaling smart contract.
+description: Dart SDK for interacting with blockchain signaling smart contracts. Includes auto-generated bindings, deployment support, and full EVM compatibility.
 version: 1.0.0
 homepage: https://github.com/gualandi/parresia-contract
 repository: https://github.com/gualandi/parresia-contract
 issue_tracker: https://github.com/gualandi/parresia-contract/issues
-license: LGPL-3.0
 
 environment:
   sdk: ">=3.0.0 <4.0.0"
@@ -17,3 +16,10 @@ dependencies:
 dev_dependencies:
   test: ^1.24.0
   lints: ^3.0.0
+
+topics:
+  - blockchain
+  - ethereum
+  - smart-contracts
+  - web3
+  - evm

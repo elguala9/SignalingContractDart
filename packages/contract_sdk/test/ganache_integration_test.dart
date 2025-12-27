@@ -1,4 +1,3 @@
-import 'dart:typed_data';
 import 'package:test/test.dart';
 import 'package:signaling_contract_sdk/generated/signaling_contract.dart';
 import 'package:web3dart/web3dart.dart';

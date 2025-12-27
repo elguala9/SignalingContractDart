@@ -58,17 +58,9 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.ISignaling__factory>;
     getContractFactory(
-      name: "ISignalingMultiOffer",
-      signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.ISignalingMultiOffer__factory>;
-    getContractFactory(
       name: "Signaling",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.Signaling__factory>;
-    getContractFactory(
-      name: "SignalingMultiOffer",
-      signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.SignalingMultiOffer__factory>;
 
     getContractAt(
       name: "OwnableUpgradeable",
@@ -126,20 +118,10 @@ declare module "hardhat/types/runtime" {
       signer?: ethers.Signer
     ): Promise<Contracts.ISignaling>;
     getContractAt(
-      name: "ISignalingMultiOffer",
-      address: string | ethers.Addressable,
-      signer?: ethers.Signer
-    ): Promise<Contracts.ISignalingMultiOffer>;
-    getContractAt(
       name: "Signaling",
       address: string | ethers.Addressable,
       signer?: ethers.Signer
     ): Promise<Contracts.Signaling>;
-    getContractAt(
-      name: "SignalingMultiOffer",
-      address: string | ethers.Addressable,
-      signer?: ethers.Signer
-    ): Promise<Contracts.SignalingMultiOffer>;
 
     deployContract(
       name: "OwnableUpgradeable",
@@ -186,17 +168,9 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.ISignaling>;
     deployContract(
-      name: "ISignalingMultiOffer",
-      signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.ISignalingMultiOffer>;
-    deployContract(
       name: "Signaling",
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.Signaling>;
-    deployContract(
-      name: "SignalingMultiOffer",
-      signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.SignalingMultiOffer>;
 
     deployContract(
       name: "OwnableUpgradeable",
@@ -254,20 +228,10 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.ISignaling>;
     deployContract(
-      name: "ISignalingMultiOffer",
-      args: any[],
-      signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.ISignalingMultiOffer>;
-    deployContract(
       name: "Signaling",
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.Signaling>;
-    deployContract(
-      name: "SignalingMultiOffer",
-      args: any[],
-      signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.SignalingMultiOffer>;
 
     // default types
     getContractFactory(

@@ -84,6 +84,97 @@ melos run contracts:build
 melos run test
 ```
 
+### Deploying Contracts with Dart
+
+You can deploy smart contracts directly from Dart without using Hardhat. Here's a complete example:
+
+```dart
+import 'package:contract_sdk/generated/signaling_contract.dart';
+import 'package:web3dart/web3dart.dart';
+import 'package:http/http.dart' as http;
+
+Future<EthereumAddress> deployContract() async {
+  // Connect to your EVM node
+  final client = Web3Client('http://localhost:7545', http.Client());
+  
+  // Setup credentials
+  final credentials = EthPrivateKey.fromHex('0xYOUR_PRIVATE_KEY');
+  final deployerAddress = credentials.address;
+  
+  // Prepare bytecode
+  final bytecodeWithoutPrefix = SignalingContract.contractBytecode.startsWith('0x') 
+      ? SignalingContract.contractBytecode.substring(2) 
+      : SignalingContract.contractBytecode;
+  
+  // Deploy transaction
+  final deployTransaction = Transaction(
+    from: deployerAddress,
+    data: hexToBytes(bytecodeWithoutPrefix),
+    maxGas: 8000000,
+    maxFeePerGas: EtherAmount.fromInt(EtherUnit.gwei, 2),
+    maxPriorityFeePerGas: EtherAmount.fromInt(EtherUnit.gwei, 2),
+  );
+  
+  // Send deployment
+  final txHash = await client.sendTransaction(
+    credentials,
+    deployTransaction,
+    chainId: 1337, // Adjust for your network
+  );
+  
+  print('Deploy Transaction Hash: $txHash');
+  
+  // Wait for receipt
+  TransactionReceipt? receipt;
+  while (receipt == null) {
+    await Future.delayed(Duration(milliseconds: 500));
+    receipt = await client.getTransactionReceipt(txHash);
+  }
+  
+  final contractAddress = receipt.contractAddress!;
+  print('Contract deployed at: ${contractAddress.hex}');
+  
+  // Initialize the contract
+  final contractAbi = ContractAbi.fromJson(
+    SignalingContract.contractAbi,
+    'Signaling',
+  );
+  final deployedContract = DeployedContract(contractAbi, contractAddress);
+  
+  final initializeFunction = deployedContract.function('initialize');
+  final initTx = await client.sendTransaction(
+    credentials,
+    Transaction.callContract(
+      contract: deployedContract,
+      function: initializeFunction,
+      parameters: [deployerAddress], // Set yourself as owner
+      maxGas: 500000,
+      maxFeePerGas: EtherAmount.fromInt(EtherUnit.gwei, 2),
+      maxPriorityFeePerGas: EtherAmount.fromInt(EtherUnit.gwei, 2),
+    ),
+    chainId: 1337,
+  );
+  
+  print('Initialize tx: $initTx');
+  
+  // Wait for initialization
+  TransactionReceipt? initReceipt;
+  while (initReceipt == null) {
+    await Future.delayed(Duration(milliseconds: 500));
+    initReceipt = await client.getTransactionReceipt(initTx);
+  }
+  
+  print('Contract initialized successfully!');
+  return contractAddress;
+}
+```
+
+**Important Notes:**
+- This deploys the contract implementation directly (not a UUPS proxy)
+- The contract is fully functional after initialization
+- For upgradeable deployments with proxy, use the Hardhat method
+- Adjust `chainId` and gas prices for your target network
+
 ### Testing
 
 The SDK includes comprehensive tests:

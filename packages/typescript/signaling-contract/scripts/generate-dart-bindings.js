@@ -86,8 +86,6 @@ class ${className} {
   }) async {
     final client = Web3Client(rpcUrl, Client());
     
-    final contractAbiObj = ContractAbi.fromJson(contractAbi, '${contractName}');
-    
     final transaction = Transaction(
       from: credentials.address,
       data: hexToBytes(contractBytecode),
@@ -95,9 +93,29 @@ class ${className} {
 
     final txHash = await client.sendTransaction(credentials, transaction);
     
-    // Note: In a real implementation, you'd wait for the transaction receipt
-    // and get the contract address from there
-    throw UnimplementedError('Contract deployment needs transaction receipt handling to get contract address');
+    // Wait for transaction receipt and get contract address
+    TransactionReceipt? receipt;
+    int attempts = 0;
+    while (receipt == null && attempts < 60) {
+      await Future.delayed(Duration(seconds: 1));
+      receipt = await client.getTransactionReceipt(txHash);
+      attempts++;
+    }
+    
+    if (receipt == null) {
+      throw Exception('Contract deployment failed: transaction receipt not found after 60 seconds');
+    }
+    
+    if (receipt.contractAddress == null) {
+      throw Exception('Contract deployment failed: no contract address in receipt');
+    }
+    
+    // Return connected instance
+    return connect(
+      rpcUrl: rpcUrl,
+      contractAddress: receipt.contractAddress!,
+      credentials: credentials,
+    );
   }
 
 ${generateMethods(abi)}

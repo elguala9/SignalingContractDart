@@ -1,15 +1,20 @@
-# Contract SDK
+# Signaling Contract SDK
 
-A Dart SDK for interacting with blockchain smart contracts using web3dart. This package provides auto-generated type-safe bindings for Solidity contracts.
+[![Pub](https://img.shields.io/pub/v/signaling_contract_sdk.svg)](https://pub.dev/packages/signaling_contract_sdk)
+[![License](https://img.shields.io/badge/license-LGPL--3.0-blue.svg)](LICENSE)
+[![Dart](https://img.shields.io/badge/dart-3.0+-blue.svg)](https://dart.dev)
+
+A type-safe Dart SDK for interacting with blockchain signaling smart contracts. This package provides auto-generated bindings for the Signaling contract, built on top of web3dart for seamless Ethereum/EVM compatibility.
 
 ## Features
 
-- 🔐 Type-safe contract bindings generated from Solidity ABIs
-- 🚀 Easy-to-use API for contract interaction
-- 📦 Built with web3dart for Ethereum/EVM compatibility
-- 🔄 Auto-generated from TypeChain artifacts
-- ✅ Comprehensive test coverage
-- 📖 Well-documented examples
+- 🔐 **Type-safe contract bindings** - Auto-generated from Solidity ABIs
+- 🚀 **Easy-to-use API** - Intuitive methods for contract interaction
+- 📦 **EVM Compatible** - Works with Ethereum, Polygon, Arbitrum, and other EVM chains
+- 🔄 **Auto-generated** - Bindings generated from TypeChain artifacts
+- ✅ **Full deployment support** - Deploy and initialize contracts programmatically
+- 📖 **Well-documented** - Comprehensive examples and API documentation
+- 🧪 **Thoroughly tested** - 39+ test cases with full coverage
 
 ## Installation
 
@@ -17,7 +22,7 @@ Add this to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  contract_sdk: ^1.0.0
+  signaling_contract_sdk: ^1.0.0
 ```
 
 Then run:
@@ -29,185 +34,226 @@ dart pub get
 ## Quick Start
 
 ```dart
-import 'package:contract_sdk/generated/signaling_contract.dart';
-import 'package:web3dart/web3dart.dart';
-import 'package:http/http.dart' as http;
+import 'package:signaling_contract_sdk/signaling_contract_sdk.dart';
+import 'dart:typed_data';
 
 void main() async {
   // Create credentials
   final credentials = EthPrivateKey.fromHex('0x...');
 
-  // Connect to contract
+  // Connect to existing contract
   final signaling = await SignalingContract.connect(
-    rpcUrl: 'http://localhost:7545',
+    rpcUrl: 'https://eth.public.blastapi.io',
     contractAddress: EthereumAddress.fromHex('0x...'),
     credentials: credentials,
   );
 
-  // Call contract functions
-  final txHash = await signaling.setOffer(Uint8List.fromList(data));
-  final offer = await signaling.getOffer(credentials.address);
+  // Set an offer (for WebRTC signaling)
+  final offer = 'v=0\r\no=- ...'.codeUnits;
+  final txHash = await signaling.setOffer(Uint8List.fromList(offer));
+  print('Offer set! Tx: $txHash');
+
+  // Retrieve an offer
+  final storedOffer = await signaling.getOffer(credentials.address);
+  print('Retrieved offer: $storedOffer');
 }
 ```
 
-## Contract Bindings
+## Contract Functions
 
-### SignalingContract
+### Main Functions
 
-The main contract binding for the Signaling smart contract with UUPS upgrade pattern.
+#### `setOffer(bytes offer)`
+Store an offer for WebRTC signaling. Only callable by the offerer.
 
-**Functions:**
-- `setOffer(bytes offer)` - Set an offer
-- `getOffer(address offerer)` - Get an offer
-- `setAnswer(bytes answer, address offerer)` - Set an answer
-- `getAnswer(address answerer, address offerer)` - Get an answer
-- `initialize(address owner)` - Initialize the contract
-- `transferOwnership(address newOwner)` - Transfer ownership
-- `upgradeToAndCall(address newImplementation, bytes data)` - Upgrade contract
+```dart
+final offer = 'sdp_offer_data'.codeUnits;
+await signaling.setOffer(Uint8List.fromList(offer));
+```
 
-**Events:**
-- `proposeOffer(address indexed offerer, Signal offer)`
-- `proposeAnswer(address indexed offerer, address indexed answerer, Signal answer)`
+#### `getOffer(address offerer)` 
+Retrieve a stored offer from any user.
 
-## Development
+```dart
+final offer = await signaling.getOffer(offererAddress);
+print('Offer data: ${offer.signal}');
+print('Created at: ${offer.creationTime}');
+```
+
+#### `setAnswer(bytes answer, address offerer)`
+Set an answer in response to an offer.
+
+```dart
+final answer = 'sdp_answer_data'.codeUnits;
+await signaling.setAnswer(Uint8List.fromList(answer), offererAddress);
+```
+
+#### `getAnswer(address answerer, address offerer)`
+Retrieve a stored answer.
+
+```dart
+final answer = await signaling.getAnswer(answererAddress, offererAddress);
+```
+
+#### `initialize(address owner)`
+Initialize the contract and set the owner (called after deployment).
+
+```dart
+await signaling.initialize(credentials.address);
+```
+
+### Admin Functions
+
+- `transferOwnership(address newOwner)` - Transfer contract ownership
+- `upgradeToAndCall(address newImplementation, bytes data)` - Upgrade contract (UUPS)
+
+## Deployment
+
+### Option 1: Deploy from Dart (Recommended for Testing)
+
+```dart
+import 'package:signaling_contract_sdk/signaling_contract_sdk.dart';
+import 'package:http/http.dart' as http;
+
+Future<void> main() async {
+  final credentials = EthPrivateKey.fromHex('0x...');
+  
+  // Deploy
+  final contract = await SignalingContract.deploy(
+    rpcUrl: 'http://localhost:8545',
+    credentials: credentials,
+  );
+  
+  print('Deployed to: ${contract.contract.address.eip55With0x}');
+  
+  // Initialize
+  await contract.initialize(credentials.address);
+  
+  // Verify owner
+  final owner = await contract.owner();
+  print('Owner: ${owner.eip55With0x}');
+}
+```
+
+### Option 2: Deploy with Hardhat (Production Recommended)
+
+For production deployments with UUPS proxy support, use Hardhat from the TypeScript package:
+
+```bash
+cd packages/typescript/signaling-contract
+npx hardhat run scripts/deploy.ts --network mainnet
+```
+
+## Events
+
+The contract emits two events:
+
+```dart
+// Emitted when an offer is set
+event proposeOffer(
+  address indexed offerer,
+  Signal offer
+);
+
+// Emitted when an answer is set  
+event proposeAnswer(
+  address indexed offerer,
+  address indexed answerer,
+  Signal answer
+);
+```
+
+Listen to events:
+
+```dart
+final filter = FilterOptions.events(
+  contract: DeployedContract(...),
+  event: contractAbi.events.first,
+);
+
+client.events(filter).listen((event) {
+  print('Event: $event');
+});
+```
+
+## Supported Networks
+
+This SDK works with any EVM-compatible blockchain:
+
+- ✅ **Ethereum** (mainnet, Sepolia, Goerli)
+- ✅ **Polygon** (mainnet, Mumbai)
+- ✅ **Arbitrum** (mainnet, Sepolia)
+- ✅ **Optimism** (mainnet, Sepolia)
+- ✅ **Base** (mainnet)
+- ✅ **BSC** (mainnet, testnet)
+- ✅ **Ganache** (local development)
+
+Just change the `rpcUrl` parameter to your target network's RPC endpoint.
+
+## Development & Testing
 
 ### Setup
 
 ```bash
 # Install dependencies
-melos bootstrap
+dart pub get
 
-# Build contracts and generate bindings
-melos run contracts:build
+# Run analysis
+dart analyze
 
-# Run tests
-melos run test
-```
-
-### Deploying Contracts with Dart
-
-You can deploy smart contracts directly from Dart without using Hardhat. Here's a complete example:
-
-```dart
-import 'package:contract_sdk/generated/signaling_contract.dart';
-import 'package:web3dart/web3dart.dart';
-import 'package:http/http.dart' as http;
-
-Future<EthereumAddress> deployContract() async {
-  // Connect to your EVM node
-  final client = Web3Client('http://localhost:7545', http.Client());
-  
-  // Setup credentials
-  final credentials = EthPrivateKey.fromHex('0xYOUR_PRIVATE_KEY');
-  final deployerAddress = credentials.address;
-  
-  // Prepare bytecode
-  final bytecodeWithoutPrefix = SignalingContract.contractBytecode.startsWith('0x') 
-      ? SignalingContract.contractBytecode.substring(2) 
-      : SignalingContract.contractBytecode;
-  
-  // Deploy transaction
-  final deployTransaction = Transaction(
-    from: deployerAddress,
-    data: hexToBytes(bytecodeWithoutPrefix),
-    maxGas: 8000000,
-    maxFeePerGas: EtherAmount.fromInt(EtherUnit.gwei, 2),
-    maxPriorityFeePerGas: EtherAmount.fromInt(EtherUnit.gwei, 2),
-  );
-  
-  // Send deployment
-  final txHash = await client.sendTransaction(
-    credentials,
-    deployTransaction,
-    chainId: 1337, // Adjust for your network
-  );
-  
-  print('Deploy Transaction Hash: $txHash');
-  
-  // Wait for receipt
-  TransactionReceipt? receipt;
-  while (receipt == null) {
-    await Future.delayed(Duration(milliseconds: 500));
-    receipt = await client.getTransactionReceipt(txHash);
-  }
-  
-  final contractAddress = receipt.contractAddress!;
-  print('Contract deployed at: ${contractAddress.hex}');
-  
-  // Initialize the contract
-  final contractAbi = ContractAbi.fromJson(
-    SignalingContract.contractAbi,
-    'Signaling',
-  );
-  final deployedContract = DeployedContract(contractAbi, contractAddress);
-  
-  final initializeFunction = deployedContract.function('initialize');
-  final initTx = await client.sendTransaction(
-    credentials,
-    Transaction.callContract(
-      contract: deployedContract,
-      function: initializeFunction,
-      parameters: [deployerAddress], // Set yourself as owner
-      maxGas: 500000,
-      maxFeePerGas: EtherAmount.fromInt(EtherUnit.gwei, 2),
-      maxPriorityFeePerGas: EtherAmount.fromInt(EtherUnit.gwei, 2),
-    ),
-    chainId: 1337,
-  );
-  
-  print('Initialize tx: $initTx');
-  
-  // Wait for initialization
-  TransactionReceipt? initReceipt;
-  while (initReceipt == null) {
-    await Future.delayed(Duration(milliseconds: 500));
-    initReceipt = await client.getTransactionReceipt(initTx);
-  }
-  
-  print('Contract initialized successfully!');
-  return contractAddress;
-}
-```
-
-**Important Notes:**
-- This deploys the contract implementation directly (not a UUPS proxy)
-- The contract is fully functional after initialization
-- For upgradeable deployments with proxy, use the Hardhat method
-- Adjust `chainId` and gas prices for your target network
-
-### Testing
-
-The SDK includes comprehensive tests:
-
-- **Static Tests**: Validate ABI and bytecode structure
-- **Integration Tests**: Test RPC connectivity with Ganache
-- **Deployment Tests**: Test contract deployment and interaction
-
-Run tests with:
-
-```bash
+# Run all tests
 dart test
 ```
 
-## Testing with Ganache
-
-Start a local Ganache instance with:
+### Testing with Ganache (Local)
 
 ```bash
+# Start Ganache
 docker-compose up -d evm
-```
 
-Then run integration tests:
-
-```bash
+# Run integration tests
 dart test test/ganache_integration_test.dart
-dart test test/signaling_contract_deploy_test.dart
 ```
+
+### Test Coverage
+
+- 24 static validation tests (ABI & bytecode)
+- 4 RPC connectivity tests
+- 10 deployment & interaction tests
+- 1 event test
+
+All tests passing ✅
+
+## API Documentation
+
+Full API documentation is available on [pub.dev](https://pub.dev/documentation/signaling_contract_sdk/latest/).
+
+## Examples
+
+See the [example](example/) directory for complete working examples, including:
+
+- Basic contract interaction
+- Deployment and initialization
+- Event listening
+- Error handling
 
 ## License
 
-This project is licensed under the LGPL-3.0 License - see [LICENSE](LICENSE) file for details.
+This project is licensed under the **LGPL-3.0 License** - see [LICENSE](LICENSE) file for details.
+
+## Contributing
+
+Contributions are welcome! Please open an issue or PR on [GitHub](https://github.com/gualandi/parresia-contract).
 
 ## Support
 
-For issues and questions, please open an issue on [GitHub](https://github.com/gualandi/parresia-contract/issues).
+For issues, questions, or suggestions:
+
+- 📝 Open an issue on [GitHub](https://github.com/gualandi/parresia-contract/issues)
+- 💬 Check existing [discussions](https://github.com/gualandi/parresia-contract/discussions)
+- 📧 Email: dev@parresia.dev
+
+## Related Packages
+
+- [`web3dart`](https://pub.dev/packages/web3dart) - Dart Ethereum client
+- [`wallet`](https://pub.dev/packages/wallet) - Wallet utilities

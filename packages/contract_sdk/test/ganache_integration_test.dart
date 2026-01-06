@@ -7,10 +7,13 @@ import 'package:http/http.dart' as http;
 void main() {
   group('SignalingContract - Integration Tests with Ganache', () {
     late Web3Client client;
+    late EthPrivateKey deployerCredentials;
     const String ganacheRpcUrl = 'http://localhost:7545';
+    const String deployerPrivateKey = '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80';
 
     setUp(() {
       client = Web3Client(ganacheRpcUrl, http.Client());
+      deployerCredentials = EthPrivateKey.fromHex(deployerPrivateKey);
     });
 
     tearDown(() {
@@ -56,10 +59,12 @@ void main() {
   });
 
   group('SignalingContract - Deploy and Connect', () {
+    late Web3Client client;
     late EthPrivateKey deployerCredentials;
     const String ganacheRpcUrl = 'http://localhost:7545';
     
     setUp(() {
+      client = Web3Client(ganacheRpcUrl, http.Client());
       // Ganache default account #0 private key
       // This is a public test account, safe to use in tests only
       deployerCredentials = EthPrivateKey.fromHex(
@@ -72,8 +77,9 @@ void main() {
         print('Deploying SignalingContract...');
         
         final contract = await SignalingContract.deploy(
-          rpcUrl: ganacheRpcUrl,
+          client: client,
           credentials: deployerCredentials,
+          chainId: 1337,
         );
 
         expect(contract, isNotNull);
@@ -116,7 +122,7 @@ void main() {
         final dummyAddress = EthereumAddress.fromHex('0x1234567890123456789012345678901234567890');
         
         final contract = await SignalingContract.connect(
-          rpcUrl: ganacheRpcUrl,
+          client: client,
           contractAddress: dummyAddress,
           credentials: deployerCredentials,
         );

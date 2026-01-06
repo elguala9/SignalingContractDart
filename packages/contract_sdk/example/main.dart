@@ -13,58 +13,75 @@ void main() async {
   print('');
   
   try {
-    // Create credentials from mnemonic (first account)
-    // First account from test mnemonic
+    // Create Web3Client (reusable for all operations)
+    final client = Web3Client(rpcUrl, http.Client());
+    
+    // Create credentials from private key
     final credentials = EthPrivateKey.fromHex(
-      '0x4f3edf983ac636a65a842ce7c78d9aa706d3b113bce9c46f30d7d21715b23b1d',
+      '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80',
     );
     
     print('📋 Using account: ${credentials.address.eip55With0x}');
-    print('');
-    
-    // Create Web3Client
-    final client = Web3Client(rpcUrl, http.Client());
     
     // Check connection
     final chainIdValue = await client.getChainId();
-    print('✅ Connected to Ganache - Chain ID: $chainIdValue');
+    print('✅ Connected to RPC - Chain ID: $chainIdValue');
     print('');
     
-    // Connect to existing Signaling contract
-    // Note: You need to deploy a contract first and get its address
-    final contractAddress = EthereumAddress.fromHex(
-      '0x1234567890123456789012345678901234567890',
-    ); // Replace with actual address
+    // Get balance
+    final balance = await client.getBalance(credentials.address);
+    print('💰 Balance: ${balance.getValueInUnit(EtherUnit.ether)} ETH');
+    print('');
     
-    print('🔄 Connecting to Signaling contract...');
-    final signaling = SignalingContract(
+    // Deploy new contract
+    print('🚀 Deploying new Signaling contract...');
+    final contract = await SignalingContract.deploy(
       client: client,
-      contract: DeployedContract(
-        ContractAbi.fromJson(SignalingContract.contractAbi, 'Signaling'),
-        contractAddress,
-      ),
       credentials: credentials,
+      chainId: 1337,  // Ganache default
     );
     
-    print('✅ Connected to contract at ${contractAddress.eip55With0x}');
+    print('✅ Deployed at: ${contract.contract.address.eip55With0x}');
+    print('');
+    
+    // Initialize the contract with owner
+    print('⚙️  Initializing contract...');
+    final initTx = await contract.initialize(credentials.address);
+    print('✅ Initialized! Tx: $initTx');
     print('');
     
     // Example: Set an offer
     print('📤 Setting an offer...');
     final offerData = 'Hello from Dart SDK!'.codeUnits;
-    final txHash = await signaling.setOffer(Uint8List.fromList(offerData));
+    final txHash = await contract.setOffer(Uint8List.fromList(offerData));
     
     print('✅ Offer set! Transaction hash: $txHash');
     print('');
     
     // Example: Get the offer back
     print('📥 Retrieving offer...');
-    final offer = await signaling.getOffer(credentials.address);
+    final offer = await contract.getOffer(credentials.address);
     
     if (offer != null) {
       print('📋 Offer retrieved');
       print('');
     }
+    
+    // Example: Connect to existing contract using factory method
+    print('');
+    print('🔄 Connecting to deployed contract via factory method...');
+    final connectedContract = await SignalingContract.connect(
+      client: client,
+      contractAddress: contract.contract.address,
+      credentials: credentials,
+    );
+    
+    print('✅ Connected to: ${connectedContract.contract.address.eip55With0x}');
+    print('');
+    
+    // Verify owner
+    final owner = await connectedContract.owner();
+    print('👤 Contract owner: ${owner.eip55With0x}');
     
     print('');
     print('🎉 Example completed successfully!');
@@ -83,45 +100,6 @@ void main() async {
       print('');
       print('💡 Make sure the contract is deployed to the specified address');
     }
-  }
-}
-
-/// Example of deploying a new contract
-Future<EthereumAddress> deploySignalingContract({
-  required String rpcUrl,
-  required EthPrivateKey credentials,
-}) async {
-  print('🚀 Deploying new Signaling contract...');
-  
-  final client = Web3Client(rpcUrl, http.Client());
-  
-  final transaction = Transaction(
-    from: credentials.address,
-    data: hexToBytes(SignalingContract.contractBytecode),
-  );
-
-  try {
-    final txHash = await client.sendTransaction(credentials, transaction);
-    print('✅ Deploy transaction sent: $txHash');
-    
-    // Wait for receipt
-    TransactionReceipt? receipt;
-    int attempts = 0;
-    while (receipt == null && attempts < 30) {
-      await Future.delayed(Duration(milliseconds: 500));
-      receipt = await client.getTransactionReceipt(txHash);
-      attempts++;
-    }
-
-    if (receipt != null && receipt.contractAddress != null) {
-      print('✅ Contract deployed at: ${receipt.contractAddress!.eip55With0x}');
-      return receipt.contractAddress!;
-    } else {
-      throw Exception('Failed to get contract address from receipt');
-    }
-  } catch (e) {
-    print('❌ Deployment failed: $e');
-    rethrow;
   }
 }
 

@@ -4,7 +4,6 @@
 import 'dart:typed_data';
 import 'package:web3dart/web3dart.dart';
 import 'package:wallet/wallet.dart';
-import 'package:http/http.dart';
 
 /// Dart binding for Signaling smart contract
 class SignalingContract {
@@ -22,13 +21,23 @@ class SignalingContract {
   });
 
   /// Factory constructor to connect to existing contract
+  /// 
+  /// Requires a pre-configured [Web3Client] to avoid creating multiple clients
+  /// and to maintain connection pooling efficiency.
+  /// 
+  /// Example:
+  /// ```dart
+  /// final client = Web3Client('http://localhost:7545', http.Client());
+  /// final signaling = await SignalingContract.connect(
+  ///   client: client,
+  ///   contractAddress: contractAddress,
+  /// );
+  /// ```
   static Future<SignalingContract> connect({
-    required String rpcUrl,
+    required Web3Client client,
     required EthereumAddress contractAddress,
     EthPrivateKey? credentials,
   }) async {
-    final client = Web3Client(rpcUrl, Client());
-    
     final contract = DeployedContract(
       ContractAbi.fromJson(contractAbi, 'Signaling'),
       contractAddress,
@@ -42,14 +51,29 @@ class SignalingContract {
   }
 
   /// Deploy new contract instance
+  ///
+  /// Pass a pre-configured [Web3Client] to avoid creating multiple clients
+  /// and to maintain connection pooling efficiency.
+  ///
+  /// Example:
+  /// ```dart
+  /// final client = Web3Client('http://localhost:7545', http.Client());
+  /// final credentials = EthPrivateKey.fromHex('0x...');
+  ///
+  /// final contract = await SignalingContract.deploy(
+  ///   client: client,
+  ///   credentials: credentials,
+  ///   chainId: 1337,  // Ganache
+  /// );
+  ///
+  /// print('Deployed at: ${contract.contract.address.eip55With0x}');
+  /// ```
   static Future<SignalingContract> deploy({
-    required String rpcUrl,
+    required Web3Client client,
     required EthPrivateKey credentials,
     List<dynamic> constructorParams = const [],
     int? chainId,
   }) async {
-    final client = Web3Client(rpcUrl, Client());
-    
     // Prepare bytecode - remove 0x prefix if present
     final bytecodeData = hexToBytes(contractBytecode.startsWith('0x') 
         ? contractBytecode.substring(2) 
@@ -94,7 +118,7 @@ class SignalingContract {
     
     // Return connected instance
     return connect(
-      rpcUrl: rpcUrl,
+      client: client,
       contractAddress: receipt.contractAddress!,
       credentials: credentials,
     );

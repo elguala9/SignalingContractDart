@@ -46,15 +46,34 @@ class SignalingContract {
     required String rpcUrl,
     required EthPrivateKey credentials,
     List<dynamic> constructorParams = const [],
+    int? chainId,
   }) async {
     final client = Web3Client(rpcUrl, Client());
     
+    // Prepare bytecode - remove 0x prefix if present
+    final bytecodeData = hexToBytes(contractBytecode.startsWith('0x') 
+        ? contractBytecode.substring(2) 
+        : contractBytecode);
+    
+    // Use EIP-1559 transaction format for better compatibility with Ganache
+    // Default gas price: 2 gwei (typical for Ganache)
+    final gasPrice = EtherAmount.fromInt(EtherUnit.gwei, 2);
+    
     final transaction = Transaction(
       from: credentials.address,
-      data: hexToBytes(contractBytecode),
+      data: bytecodeData,
+      maxGas: 8000000, // Allow sufficient gas for contract deployment
+      maxFeePerGas: gasPrice,
+      maxPriorityFeePerGas: gasPrice,
     );
 
-    final txHash = await client.sendTransaction(credentials, transaction);
+    // Send transaction with explicit chainId to avoid signature issues
+    // Ganache default chainId is 1337, but can be overridden
+    final txHash = await client.sendTransaction(
+      credentials, 
+      transaction,
+      chainId: chainId ?? 1337,
+    );
     
     // Wait for transaction receipt and get contract address
     TransactionReceipt? receipt;

@@ -1,7 +1,8 @@
 import 'dart:io';
 import 'package:test/test.dart';
-import 'package:signaling_contract_sdk/generated/signaling_contract.dart';
+import 'package:signaling_contract_sdk/generated/signaling_contract.dart' hide hexToBytes;
 import 'package:web3dart/web3dart.dart';
+import 'package:wallet/wallet.dart';
 import 'package:http/http.dart' as http;
 
 void main() {
@@ -22,7 +23,7 @@ void main() {
       credentials = EthPrivateKey.fromHex(deployerPrivateKey);
       deployerAddress = credentials.address;
 
-      print('Deployer Address: ${deployerAddress.hex}');
+      print('Deployer Address: ${deployerAddress.eip55With0x}');
     });
 
     tearDown(() {
@@ -72,7 +73,7 @@ void main() {
         if (addressMatch != null) {
           final addressHex = addressMatch.group(1)!;
           contractAddress = EthereumAddress.fromHex(addressHex);
-          print('Contract deployed at: ${contractAddress.hex}');
+          print('Contract deployed at: ${contractAddress.eip55With0x}');
           
           expect(contractAddress, isNotNull);
           
@@ -145,7 +146,7 @@ void main() {
         expect(receipt!.status, isTrue, reason: 'Transaction failed');
         
         final implementationAddress = receipt.contractAddress!;
-        print('Implementation deployed at: ${implementationAddress.hex}');
+        print('Implementation deployed at: ${implementationAddress.eip55With0x}');
         print('Gas used: ${receipt.gasUsed}');
 
         // Verify bytecode at address
@@ -225,8 +226,8 @@ void main() {
     test('Ganache has deterministic accounts from mnemonic', () async {
       try {
         // Verify we can derive the same account from mnemonic
-        print('Deployer: ${deployerAddress.hex}');
-        expect(deployerAddress.hex.length, equals(42)); // 0x + 40 hex chars
+        print('Deployer: ${deployerAddress.eip55With0x}');
+        expect(deployerAddress.eip55With0x.length, equals(42)); // 0x + 40 hex chars
       } catch (e) {
         print('Accounts test error: $e');
       }

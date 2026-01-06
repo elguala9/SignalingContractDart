@@ -1,6 +1,7 @@
 import 'package:test/test.dart';
-import 'package:signaling_contract_sdk/generated/signaling_contract.dart';
+import 'package:signaling_contract_sdk/generated/signaling_contract.dart' hide hexToBytes;
 import 'package:web3dart/web3dart.dart';
+import 'package:wallet/wallet.dart';
 import 'package:http/http.dart' as http;
 
 void main() {
@@ -77,9 +78,9 @@ void main() {
 
         expect(contract, isNotNull);
         expect(contract.contract.address, isNotNull);
-        expect(contract.contract.address.hex, startsWith('0x'));
+        expect(contract.contract.address.eip55With0x, startsWith('0x'));
         
-        print('✅ Deployed at: ${contract.contract.address.hex}');
+        print('✅ Deployed at: ${contract.contract.address.eip55With0x}');
         
         // Wait a bit for deploy to settle
         await Future.delayed(Duration(seconds: 2));
@@ -92,7 +93,7 @@ void main() {
         // Test basic read after deploy
         final owner = await contract.owner();
         expect(owner, equals(deployerCredentials.address));
-        print('✅ Owner initialized correctly: ${owner.hex}');
+        print('✅ Owner initialized correctly: ${owner.eip55With0x}');
         
       } catch (e) {
         print('⚠️  Deploy and initialize test skipped: ${e.toString()}');
@@ -122,7 +123,7 @@ void main() {
 
         expect(contract, isNotNull);
         expect(contract.contract.address, equals(dummyAddress));
-        print('✅ Contract instance created from address: ${contract.contract.address.hex}');
+        print('✅ Contract instance created from address: ${contract.contract.address.eip55With0x}');
         
       } catch (e) {
         print('⚠️  Connect test error: ${e.toString()}');

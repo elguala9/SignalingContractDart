@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 import 'package:web3dart/web3dart.dart';
-import 'package:signaling_contract_sdk/generated/signaling_contract.dart';
+import 'package:wallet/wallet.dart';
+import 'package:signaling_contract_sdk/generated/signaling_contract.dart' hide hexToBytes;
 import 'package:http/http.dart' as http;
 
 /// Example demonstrating how to use the auto-generated contract bindings
@@ -18,7 +19,7 @@ void main() async {
       '0x4f3edf983ac636a65a842ce7c78d9aa706d3b113bce9c46f30d7d21715b23b1d',
     );
     
-    print('📋 Using account: ${credentials.address.hex}');
+    print('📋 Using account: ${credentials.address.eip55With0x}');
     print('');
     
     // Create Web3Client
@@ -45,7 +46,7 @@ void main() async {
       credentials: credentials,
     );
     
-    print('✅ Connected to contract at ${contractAddress.hex}');
+    print('✅ Connected to contract at ${contractAddress.eip55With0x}');
     print('');
     
     // Example: Set an offer
@@ -113,7 +114,7 @@ Future<EthereumAddress> deploySignalingContract({
     }
 
     if (receipt != null && receipt.contractAddress != null) {
-      print('✅ Contract deployed at: ${receipt.contractAddress!.hex}');
+      print('✅ Contract deployed at: ${receipt.contractAddress!.eip55With0x}');
       return receipt.contractAddress!;
     } else {
       throw Exception('Failed to get contract address from receipt');

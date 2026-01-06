@@ -3,6 +3,7 @@
 
 import 'dart:typed_data';
 import 'package:web3dart/web3dart.dart';
+import 'package:wallet/wallet.dart';
 import 'package:http/http.dart';
 
 /// Dart binding for Signaling smart contract

@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.1] - 2026-01-07
+
+### Changed
+- **Breaking**: `SignalingContract.deploy()` now requires `Web3Client` parameter instead of `rpcUrl`
+- **Breaking**: `SignalingContract.connect()` now requires `Web3Client` parameter instead of `rpcUrl`
+- Improved resource management by reusing Web3Client instances
+- Better connection pooling and HTTP client efficiency
+
+### Improved
+- Enhanced API consistency with standard Dart web3 patterns
+- Simplified example showing best practices
+- Updated all tests to use new parameter pattern
+- Added documentation for chainId parameter (default: 1337)
+
+### Fixed
+- Removed unused http.Client import from generated code
+- Cleaner separation of concerns (client vs credentials)
+
 ## [1.0.0] - 2025-12-27
 
 ### Added
@@ -45,4 +63,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Test documentation
 - API reference
 
+[1.0.1]: https://github.com/gualandi/parresia-contract/releases/tag/v1.0.1
 [1.0.0]: https://github.com/gualandi/parresia-contract/releases/tag/v1.0.0

@@ -1,6 +1,6 @@
 name: signaling_contract_sdk
 description: Type-safe Dart SDK for blockchain signaling smart contracts with auto-generated bindings, Ethereum/EVM support, and comprehensive deployment utilities.
-version: 1.0.1
+version: 1.0.2
 homepage: https://github.com/gualandi/parresia-contract
 repository: https://github.com/gualandi/parresia-contract
 issue_tracker: https://github.com/gualandi/parresia-contract/issues

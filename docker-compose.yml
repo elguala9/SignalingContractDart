@@ -1,16 +1,21 @@
+version: '3.8'
+
 services:
-  # EVM Ganache - Standalone Ethereum test network
-  evm:
+  # EVM Ganache - Standalone Ethereum test network for integration tests
+  ganache:
     image: trufflesuite/ganache:latest
-    container_name: contract-evm
+    container_name: parresia-contract-ganache
     ports:
-      - "7545:8545"
+      - "8545:8545"
     command:
       - --mnemonic=test test test test test test test test test test test junk
-      - --defaultBalanceEther=10000
+      - --defaultBalanceEther=1000
       - --accounts=20
       - --chain.chainId=1337
       - --hardfork=shanghai
+      - --deterministic=true
+      - --wallet.deterministic=true
+      - --hostname=0.0.0.0
     environment:
       - GANACHE_DETERMINISTIC=true
     networks:
@@ -19,11 +24,13 @@ services:
       test: ["CMD", "curl", "-f", "http://localhost:8545"]
       interval: 5s
       timeout: 3s
-      retries: 5
-      start_period: 5s
+      retries: 10
+      start_period: 10s
     restart: unless-stopped
+    labels:
+      description: "Ganache instance for Signaling Contract integration tests"
 
 networks:
   contract-network:
     driver: bridge
-    name: contract-blockchain-network
+    name: parresia-contract-network

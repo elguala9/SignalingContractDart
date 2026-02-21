@@ -29,7 +29,7 @@ const config: HardhatUserConfig = {
       timeout: 40000
     },
     ganache: {
-      url: "http://127.0.0.1:7545",
+      url: "http://127.0.0.1:8545",
       chainId: 1337,
       accounts: {
         mnemonic: "test test test test test test test test test test test junk",

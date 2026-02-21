@@ -15,113 +15,34 @@ const _abi = [
       {
         indexed: true,
         internalType: "address",
-        name: "offerer",
+        name: "sender",
         type: "address",
       },
       {
-        indexed: true,
-        internalType: "address",
-        name: "answerer",
-        type: "address",
-      },
-      {
-        components: [
-          {
-            internalType: "bytes",
-            name: "signal",
-            type: "bytes",
-          },
-          {
-            internalType: "uint256",
-            name: "creationTime",
-            type: "uint256",
-          },
-        ],
         indexed: false,
-        internalType: "struct Signal",
-        name: "answer",
-        type: "tuple",
+        internalType: "bytes",
+        name: "signal",
+        type: "bytes",
+      },
+      {
+        indexed: false,
+        internalType: "uint256",
+        name: "timestamp",
+        type: "uint256",
       },
     ],
-    name: "proposeAnswer",
-    type: "event",
-  },
-  {
-    anonymous: false,
-    inputs: [
-      {
-        indexed: true,
-        internalType: "address",
-        name: "offerer",
-        type: "address",
-      },
-      {
-        components: [
-          {
-            internalType: "bytes",
-            name: "signal",
-            type: "bytes",
-          },
-          {
-            internalType: "uint256",
-            name: "creationTime",
-            type: "uint256",
-          },
-        ],
-        indexed: false,
-        internalType: "struct Signal",
-        name: "offer",
-        type: "tuple",
-      },
-    ],
-    name: "proposeOffer",
+    name: "SignalEmitted",
     type: "event",
   },
   {
     inputs: [
       {
         internalType: "address",
-        name: "answerer",
-        type: "address",
-      },
-      {
-        internalType: "address",
         name: "offerer",
         type: "address",
       },
     ],
-    name: "getAnswer",
-    outputs: [
-      {
-        components: [
-          {
-            internalType: "bytes",
-            name: "signal",
-            type: "bytes",
-          },
-          {
-            internalType: "uint256",
-            name: "creationTime",
-            type: "uint256",
-          },
-        ],
-        internalType: "struct Signal",
-        name: "",
-        type: "tuple",
-      },
-    ],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [
-      {
-        internalType: "address",
-        name: "offerer",
-        type: "address",
-      },
-    ],
-    name: "getOffer",
+    name: "getSignal",
     outputs: [
       {
         components: [
@@ -148,29 +69,11 @@ const _abi = [
     inputs: [
       {
         internalType: "bytes",
-        name: "answer",
-        type: "bytes",
-      },
-      {
-        internalType: "address",
-        name: "offerer",
-        type: "address",
-      },
-    ],
-    name: "setAnswer",
-    outputs: [],
-    stateMutability: "nonpayable",
-    type: "function",
-  },
-  {
-    inputs: [
-      {
-        internalType: "bytes",
-        name: "offer",
+        name: "compressedSignal",
         type: "bytes",
       },
     ],
-    name: "setOffer",
+    name: "setSignal",
     outputs: [],
     stateMutability: "nonpayable",
     type: "function",

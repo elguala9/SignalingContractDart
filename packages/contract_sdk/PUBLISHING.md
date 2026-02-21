@@ -1,92 +1,72 @@
-# Guida alla Pubblicazione del Pacchetto
+# Publishing Guide
 
-## Stato del Pacchetto
+This document explains how to publish the `signaling_contract_sdk` package to pub.dev.
 
-✅ **Il pacchetto è pronto per essere pubblicato su pub.dev**
+## Prerequisites
 
-### Verifiche Completate
+1. Have a pub.dev account (register at https://pub.dev)
+2. Have `dart` installed and configured
+3. Ensure you have the required credentials
 
-- ✅ pubspec.yaml configurato correttamente
-- ✅ CHANGELOG.md aggiornato alla versione 1.0.0
-- ✅ README.md completo con esempi e guida al deployment
-- ✅ LICENSE presente (LGPL-3.0)
-- ✅ Tutti i test passano (39/39)
-- ✅ Analysis warnings risolti (rimangono solo info sui print nei test/examples)
-- ✅ Pacchetto validato con `dart pub publish --dry-run`
+## Pre-Publishing Checklist
 
-### Contenuto del Pacchetto
+- [ ] Update version in `pubspec.yaml`
+- [ ] Update CHANGELOG.md with changes
+- [ ] Run `dart format .` to format code
+- [ ] Run `dart analyze` to check for issues
+- [ ] Run `dart test` to ensure all tests pass
+- [ ] Ensure all generated code is up-to-date
+- [ ] Review README.md for accuracy
+- [ ] Check that no sensitive information is included
 
-**Dimensione totale**: 16 KB (compressa)
+## Publishing Steps
 
-**File inclusi**:
-- `lib/generated/` - Bindings generati dal contratto Solidity
-- `example/main.dart` - Esempio completo di utilizzo
-- `test/` - Suite di test completa (39 test)
-- `README.md` - Documentazione completa
-- `CHANGELOG.md` - Storia delle versioni
-- `LICENSE` - Licenza LGPL-3.0
+1. **Verify your pub.dev credentials**:
+   ```bash
+   dart pub login
+   ```
 
-### Come Pubblicare
+2. **Run pre-publish checks**:
+   ```bash
+   dart pub publish --dry-run
+   ```
 
-#### 1. Commit delle modifiche
+3. **Publish to pub.dev**:
+   ```bash
+   dart pub publish
+   ```
 
+## After Publishing
+
+1. Create a release on GitHub with the same version number
+2. Update documentation links if necessary
+3. Announce the new release in relevant channels
+
+## Version Management
+
+Follow [Semantic Versioning](https://semver.org/):
+- MAJOR version for incompatible API changes
+- MINOR version for new features (backward compatible)
+- PATCH version for bug fixes (backward compatible)
+
+## Troubleshooting
+
+### Published version not showing up
+
+Wait up to 5 minutes for pub.dev to index the new version.
+
+### Need to unpublish?
+
+Use:
 ```bash
-cd packages/contract_sdk
-git add .
-git commit -m "Prepare package v1.0.0 for publication"
+dart pub unpublish signaling_contract_sdk:VERSION
 ```
 
-#### 2. Verifica finale
+This can only be done within 24 hours of publishing.
 
-```bash
-dart pub publish --dry-run
-```
+## Documentation
 
-#### 3. Pubblica su pub.dev
+After publishing, documentation will be automatically generated at:
+https://pub.dev/documentation/signaling_contract_sdk/latest/
 
-```bash
-dart pub publish
-```
-
-**Nota**: La prima volta ti verrà chiesto di:
-1. Confermare l'account Google/GitHub per l'autenticazione
-2. Accettare i termini di servizio di pub.dev
-3. Confermare la pubblicazione
-
-#### 4. Verifica la pubblicazione
-
-Dopo alcuni minuti, il pacchetto sarà disponibile su:
-- https://pub.dev/packages/signaling_contract_sdk
-- Installabile con: `dart pub add signaling_contract_sdk`
-
-### Caratteristiche Principali
-
-1. **Deploy diretto con Dart**: Possibilità di deployare contratti senza Hardhat
-2. **UUPS Support**: Supporto completo per contratti upgradeable
-3. **Type-safe bindings**: Bindings type-safe generati automaticamente
-4. **Test completi**: 39 test che coprono deployment, interazione ed eventi
-5. **Documentazione completa**: README con esempi pratici di deployment
-
-### Topics/Tags
-
-Il pacchetto è taggato con:
-- blockchain
-- ethereum
-- smart-contracts
-- web3
-- evm
-
-Questo aiuterà gli sviluppatori a trovare il pacchetto su pub.dev.
-
-### Dipendenze
-
-- `web3dart: ^2.7.3` - Interazione con blockchain EVM
-- `http: ^1.1.0` - Client HTTP per RPC
-- `convert: ^3.1.1` - Conversioni hex/bytes
-
-### Prossimi Passi Dopo la Pubblicazione
-
-1. Monitora le issues su GitHub
-2. Considera aggiornamenti per supportare nuove versioni di web3dart
-3. Aggiungi esempi per altri casi d'uso
-4. Documentazione video/tutorial se richiesto dalla community
+Ensure your code has proper dartdoc comments for best results.

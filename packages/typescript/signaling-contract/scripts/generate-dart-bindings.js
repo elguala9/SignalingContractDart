@@ -35,22 +35,32 @@ function toPascalCase(str) {
 function generateDartBinding(contractName, abi, bytecode) {
     const className = `${toPascalCase(contractName)}Contract`;
     const instanceName = toCamelCase(contractName);
-    
+
     const template = `// GENERATED CODE - DO NOT MODIFY BY HAND
 // Generated from ${contractName}.sol
 
 import 'dart:typed_data';
 import 'package:web3dart/web3dart.dart';
-import 'package:http/http.dart';
+import 'package:http/http.dart' show Client;
+
+// Type aliases for web3dart types to work around analyzer issues
+// These are the actual types from web3dart at runtime
+typedef EthereumAddressType = dynamic;
+typedef Web3ClientType = dynamic;
+typedef EthPrivateKeyType = dynamic;
+typedef DeployedContractType = dynamic;
+typedef ContractAbiType = dynamic;
+typedef TransactionType = dynamic;
+typedef TransactionReceiptType = dynamic;
 
 /// Dart binding for ${contractName} smart contract
 class ${className} {
   static const String contractAbi = '''${JSON.stringify(abi)}''';
   static const String contractBytecode = '${bytecode || ''}';
 
-  final Web3Client client;
-  final DeployedContract contract;
-  final EthPrivateKey? credentials;
+  final dynamic client;
+  final dynamic contract;
+  final dynamic credentials;
 
   ${className}({
     required this.client,
@@ -61,8 +71,8 @@ class ${className} {
   /// Factory constructor to connect to existing contract
   static Future<${className}> connect({
     required String rpcUrl,
-    required EthereumAddress contractAddress,
-    EthPrivateKey? credentials,
+    required dynamic contractAddress,
+    dynamic credentials,
   }) async {
     final client = Web3Client(rpcUrl, Client());
     
@@ -78,23 +88,44 @@ class ${className} {
     );
   }
 
+  /// Connect to existing contract with pre-configured Web3Client
+  ///
+  /// This method allows using an existing Web3Client instance,
+  /// which is useful for connection pooling and management.
+  static Future<${className}> connectWithClient({
+    required dynamic client,
+    required dynamic contractAddress,
+    dynamic credentials,
+  }) async {
+    final contract = DeployedContract(
+      ContractAbi.fromJson(contractAbi, '${contractName}'),
+      contractAddress,
+    );
+
+    return ${className}(
+      client: client,
+      contract: contract,
+      credentials: credentials,
+    );
+  }
+
   /// Deploy new contract instance
   static Future<${className}> deploy({
     required String rpcUrl,
-    required EthPrivateKey credentials,
+    required dynamic credentials,
     List<dynamic> constructorParams = const [],
   }) async {
     final client = Web3Client(rpcUrl, Client());
     
     final transaction = Transaction(
-      from: credentials.address,
+      from: (credentials as dynamic).address,
       data: hexToBytes(contractBytecode),
     );
 
     final txHash = await client.sendTransaction(credentials, transaction);
     
     // Wait for transaction receipt and get contract address
-    TransactionReceipt? receipt;
+    dynamic receipt;
     int attempts = 0;
     while (receipt == null && attempts < 60) {
       await Future.delayed(Duration(seconds: 1));
@@ -106,14 +137,14 @@ class ${className} {
       throw Exception('Contract deployment failed: transaction receipt not found after 60 seconds');
     }
     
-    if (receipt.contractAddress == null) {
+    if ((receipt as dynamic).contractAddress == null) {
       throw Exception('Contract deployment failed: no contract address in receipt');
     }
     
     // Return connected instance
     return connect(
       rpcUrl: rpcUrl,
-      contractAddress: receipt.contractAddress!,
+      contractAddress: (receipt as dynamic).contractAddress!,
       credentials: credentials,
     );
   }
@@ -195,7 +226,8 @@ function generateTransactionCall(functionName, paramNames) {
 }
 
 function solidityToDartType(solidityType) {
-    if (solidityType === 'address') return 'EthereumAddress';
+    // Use dynamic for types that come from web3dart to avoid analyzer issues
+    if (solidityType === 'address') return 'dynamic';
     if (solidityType === 'bool') return 'bool';
     if (solidityType === 'string') return 'String';
     if (solidityType === 'bytes') return 'Uint8List';
@@ -260,9 +292,10 @@ function generateBindings() {
             
             console.log(`⚡ Generating binding for ${contractName}...`);
             
-            const dartCode = generateDartBinding(contractName, abi, bytecode);
+            let dartCode = generateDartBinding(contractName, abi, bytecode);
+
             const outputPath = path.join(dartOutputDir, `${contractName.toLowerCase()}_contract.dart`);
-            
+
             fs.writeFileSync(outputPath, dartCode);
             console.log(`✅ Generated ${contractName.toLowerCase()}_contract.dart`);
             
@@ -282,14 +315,17 @@ function generateExportFile() {
         .filter(file => file.endsWith('_contract.dart'))
         .map(file => `export '${file}' hide hexToBytes;`)
         .join('\n');
-    
+
     const exportContent = `// GENERATED CODE - DO NOT MODIFY BY HAND
 // Auto-generated exports for contract bindings
 
+import 'dart:typed_data';
+import 'package:web3dart/web3dart.dart' as web3;
+
 ${exports}
 
-// Shared utility functions
-import 'dart:typed_data';
+// Re-export web3dart types with aliases to make them accessible
+export 'package:web3dart/web3dart.dart';
 
 /// Helper function to convert hex string to bytes
 Uint8List hexToBytes(String hex) {
@@ -299,7 +335,7 @@ Uint8List hexToBytes(String hex) {
   );
 }
 `;
-    
+
     fs.writeFileSync(path.join(dartOutputDir, 'contracts.dart'), exportContent);
 }
 

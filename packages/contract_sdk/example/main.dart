@@ -1,105 +1,181 @@
-import 'dart:typed_data';
-import 'package:web3dart/web3dart.dart';
-import 'package:wallet/wallet.dart';
-import 'package:signaling_contract_sdk/generated/signaling_contract.dart' hide hexToBytes;
-import 'package:http/http.dart' as http;
+// ignore_for_file: avoid_print
+/// Example usage of the Signaling Contract SDK
+///
+/// This example demonstrates:
+/// 1. Connecting to an existing contract
+/// 2. Reading contract state
+/// 3. Writing data to the contract
+/// 4. Deploying a new contract
+library signaling_contract_sdk.example;
 
-/// Example demonstrating how to use the auto-generated contract bindings
-void main() async {
-  // Configuration for Ganache (from docker-compose)
-  const rpcUrl = 'http://localhost:7545';
-  
-  print('🔗 Contract SDK Example with Auto-Generated Bindings');
-  print('');
-  
+import 'dart:typed_data';
+import 'package:http/http.dart' as http;
+import 'package:wallet/wallet.dart';
+import 'package:signaling_contract_sdk/signaling_contract_sdk.dart';
+
+Future<void> main() async {
+  print('Signaling Contract SDK Example\n');
+
+  // Example 1: Connect to an existing contract
+  await connectToContract();
+
+  // Example 2: Read contract state
+  // Uncomment to run:
+  // await readContractState();
+
+  // Example 3: Set a signal
+  // Uncomment to run:
+  // await setSignal();
+
+  // Example 4: Deploy a new contract
+  // Uncomment to run:
+  // await deployContract();
+}
+
+/// Example 1: Connect to an existing contract
+///
+/// This example shows how to connect to a contract that's already deployed
+/// on the blockchain.
+Future<void> connectToContract() async {
+  print('Example 1: Connecting to contract...\n');
+
+  // Configuration
+  const rpcUrl = 'http://localhost:8545'; // Local Ganache or Hardhat node
+  const contractAddressHex = '0x5FbDB2315678afccb333f8a9c91ff5f8b6e74aaf';
+
   try {
-    // Create Web3Client (reusable for all operations)
+    // Create a Web3Client
     final client = Web3Client(rpcUrl, http.Client());
-    
-    // Create credentials from private key
-    final credentials = EthPrivateKey.fromHex(
-      '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80',
-    );
-    
-    print('📋 Using account: ${credentials.address.eip55With0x}');
-    
-    // Check connection
-    final chainIdValue = await client.getChainId();
-    print('✅ Connected to RPC - Chain ID: $chainIdValue');
-    print('');
-    
-    // Get balance
-    final balance = await client.getBalance(credentials.address);
-    print('💰 Balance: ${balance.getValueInUnit(EtherUnit.ether)} ETH');
-    print('');
-    
-    // Deploy new contract
-    print('🚀 Deploying new Signaling contract...');
-    final contract = await SignalingContract.deploy(
+
+    // Connect to the contract without credentials (read-only)
+    await SignalingContract.connectWithClient(
       client: client,
-      credentials: credentials,
-      chainId: 1337,  // Ganache default
+      contractAddress: EthereumAddress.fromHex(contractAddressHex),
     );
-    
-    print('✅ Deployed at: ${contract.contract.address.eip55With0x}');
-    print('');
-    
-    // Initialize the contract with owner
-    print('⚙️  Initializing contract...');
-    final initTx = await contract.initialize(credentials.address);
-    print('✅ Initialized! Tx: $initTx');
-    print('');
-    
-    // Example: Set an offer
-    print('📤 Setting an offer...');
-    final offerData = 'Hello from Dart SDK!'.codeUnits;
-    final txHash = await contract.setOffer(Uint8List.fromList(offerData));
-    
-    print('✅ Offer set! Transaction hash: $txHash');
-    print('');
-    
-    // Example: Get the offer back
-    print('📥 Retrieving offer...');
-    final offer = await contract.getOffer(credentials.address);
-    
-    if (offer != null) {
-      print('📋 Offer retrieved');
-      print('');
-    }
-    
-    // Example: Connect to existing contract using factory method
-    print('');
-    print('🔄 Connecting to deployed contract via factory method...');
-    final connectedContract = await SignalingContract.connect(
-      client: client,
-      contractAddress: contract.contract.address,
-      credentials: credentials,
-    );
-    
-    print('✅ Connected to: ${connectedContract.contract.address.eip55With0x}');
-    print('');
-    
-    // Verify owner
-    final owner = await connectedContract.owner();
-    print('👤 Contract owner: ${owner.eip55With0x}');
-    
-    print('');
-    print('🎉 Example completed successfully!');
-    
-  } catch (e, stackTrace) {
-    print('❌ Error: $e');
-    print('Stack trace: $stackTrace');
-    
-    if (e.toString().contains('connection refused')) {
-      print('');
-      print('💡 Make sure Ganache is running:');
-      print('   docker-compose up -d evm');
-    }
-    
-    if (e.toString().contains('revert') || e.toString().contains('execution reverted')) {
-      print('');
-      print('💡 Make sure the contract is deployed to the specified address');
-    }
+
+    print('✓ Connected to contract at: $contractAddressHex');
+    print('  RPC URL: $rpcUrl\n');
+
+    // Clean up
+    client.dispose();
+  } catch (e) {
+    print('✗ Connection failed: $e');
+    print('  Make sure the blockchain node is running at $rpcUrl\n');
   }
 }
 
+/// Example 2: Read contract state
+///
+/// This example shows how to read the owner and offers from the contract.
+Future<void> readContractState() async {
+  print('Example 2: Reading contract state...\n');
+
+  const rpcUrl = 'http://localhost:8545';
+  const contractAddressHex = '0x5FbDB2315678afccb333f8a9c91ff5f8b6e74aaf';
+
+  try {
+    // Create a Web3Client
+    final client = Web3Client(rpcUrl, http.Client());
+
+    final contract = await SignalingContract.connectWithClient(
+      client: client,
+      contractAddress: EthereumAddress.fromHex(contractAddressHex),
+    );
+
+    // Read the owner
+    final owner = await contract.owner();
+    print('Contract Owner: $owner\n');
+
+    // Try to read a signal for a specific address
+    final testAddress = EthereumAddress.fromHex('0x1234567890123456789012345678901234567890');
+    final signal = await contract.getSignal(testAddress);
+    print('Signal for $testAddress:');
+    print('  Data: $signal');
+    print('');
+
+    client.dispose();
+  } catch (e) {
+    print('✗ Failed to read contract state: $e\n');
+  }
+}
+
+/// Example 3: Set a signal
+///
+/// This example shows how to set a signal in the contract (requires credentials).
+Future<void> setSignal() async {
+  print('Example 3: Setting a signal...\n');
+
+  const rpcUrl = 'http://localhost:8545';
+  const contractAddressHex = '0x5FbDB2315678afccb333f8a9c91ff5f8b6e74aaf';
+  // WARNING: Never use private keys in production code!
+  // This is only for development/testing.
+  const privateKeyHex = '0xac0974bec39a17e36ba4a6b4d238ff944bacb476cadeee4c811daadc2bae28078';
+
+  try {
+    final credentials = EthPrivateKey.fromHex(privateKeyHex);
+
+    // Create a Web3Client
+    final client = Web3Client(rpcUrl, http.Client());
+
+    // Connect with credentials (allows write operations)
+    final contract = await SignalingContract.connectWithClient(
+      client: client,
+      contractAddress: EthereumAddress.fromHex(contractAddressHex),
+      credentials: credentials,
+    );
+
+    // Create test data
+    final testData = Uint8List.fromList([1, 2, 3, 4, 5, 6, 7, 8]);
+
+    print('Sending signal...');
+    print('  Data: $testData');
+
+    // Set the signal
+    final txHash = await contract.setSignal(testData);
+
+    print('✓ Signal sent!');
+    print('  Transaction hash: $txHash\n');
+
+    // Wait for transaction to be confirmed
+    print('Waiting for transaction confirmation...');
+    await Future.delayed(Duration(seconds: 2));
+    print('✓ Transaction confirmed\n');
+
+    client.dispose();
+  } catch (e) {
+    print('✗ Failed to set signal: $e\n');
+  }
+}
+
+/// Example 4: Deploy a new contract
+///
+/// This example shows how to deploy a new instance of the contract.
+Future<void> deployContract() async {
+  print('Example 4: Deploying a new contract...\n');
+
+  const rpcUrl = 'http://localhost:8545';
+  // WARNING: Never use private keys in production code!
+  const privateKeyHex = '0xac0974bec39a17e36ba4a6b4d238ff944bacb476cadeee4c811daadc2bae28078';
+
+  try {
+    final credentials = EthPrivateKey.fromHex(privateKeyHex);
+
+    print('Deploying contract...');
+    print('  Owner: ${credentials.address}');
+    print('  RPC URL: $rpcUrl');
+
+    // Deploy the contract
+    final contract = await SignalingContract.deploy(
+      rpcUrl: rpcUrl,
+      credentials: credentials,
+      constructorParams: [],
+    );
+
+    print('\n✓ Contract deployed!');
+    print('  Contract address: ${contract.contract.address}\n');
+
+  } catch (e) {
+    print('✗ Deployment failed: $e');
+    print('  Make sure the blockchain node is running and you have enough funds\n');
+  }
+}

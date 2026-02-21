@@ -1,67 +1,130 @@
-# SignalingContract Test Files
+# Signaling Contract SDK - Tests
 
-## Test Files Overview
+This directory contains the test suite for the Signaling Contract SDK.
 
-### 1. `signaling_contract_test.dart` (Validazione Statica)
-- 24 test
-- Validano ABI, bytecode e utility functions
-- **Non richiedono Ganache**
-- Esecuzione: `dart test test/signaling_contract_test.dart`
+## Test Structure
 
-### 2. `ganache_integration_test.dart` (Connettività)
-- 4 test
-- Testano la connessione a Ganache su localhost:7545
-- Verificano chain ID e disponibilità RPC
-- **Richiedono Ganache in esecuzione**
-- Esecuzione: `dart test test/ganache_integration_test.dart`
+### Unit Tests
 
-### 3. `signaling_contract_deploy_test.dart` (Full Integration - Deploy)
-- 10 test
-- Tentano il deploy del contratto su Ganache
-- Testano interazioni blockchain reali
-- **Richiedono Ganache con account finanziati**
-- Esecuzione: `dart test test/signaling_contract_deploy_test.dart`
+- **signaling_contract_test.dart**: Tests for utility functions and contract bindings
+  - Hex to bytes conversion
+  - Contract ABI validation
+  - Contract bytecode validation
 
-## Setup Ganache
+### Integration Tests
+
+- **signaling_contract_deploy_test.dart**: Integration tests for contract deployment and interaction
+  - Requires a running blockchain node (Ganache, Hardhat, or testnet)
+  - Tests are commented out by default
+  - Uncomment to run against a live blockchain
+
+## Running Tests
+
+### Run all tests
 
 ```bash
-# Riavvia Ganache con la mnemonic corretta
-docker-compose up evm -d
-
-# Verifica che sia in esecuzione
-docker ps | grep contract-evm
+dart test
 ```
 
-## Eseguire i Test
+### Run specific test file
 
 ```bash
-# Tutti i test
-melos run test
-
-# Solo validazione statica (veloce, non richiede Ganache)
-melos exec -- "dart test test/signaling_contract_test.dart"
-
-# Solo connettività
-melos exec -- "dart test test/ganache_integration_test.dart"
-
-# Solo deploy e interazioni
-melos exec -- "dart test test/signaling_contract_deploy_test.dart"
+dart test test/signaling_contract_test.dart
 ```
 
-## Stato Attuale
+### Run with verbose output
 
-- ✅ Test statici: **24/24 passano**
-- ✅ Test integrazione (connettività): **4/4 passano**
-- ⚠️ Test deploy: Richiedono Ganache correttamente configurato con ETH
-
-## Note
-
-La private key usata nei test di deploy è derivata dalla mnemonic Ganache:
-```
-test test test test test test test test test test test junk
+```bash
+dart test -v
 ```
 
-Ganache genera 20 account con 10000 ETH ciascuno. La prima chiave è:
+### Run with code coverage
+
+```bash
+dart pub global activate coverage
+dart pub global run coverage:test_with_coverage
 ```
-0x4f3edf983ac636a65a842ce7c78d9aa706d3b113bce9c46f30d7d21715b23b1d
+
+## Integration Testing Setup
+
+### Automated Integration Testing (Recommended)
+
+The integration tests are now **fully automated**! A single command will:
+1. Start Hardhat node
+2. Deploy the contract
+3. Run all integration tests
+4. Clean up automatically
+
+**Run all tests with:**
+```bash
+melos run test:integration
 ```
+
+Or directly with bash:
+```bash
+bash scripts/test-integration.sh
+```
+
+### Manual Integration Testing
+
+If you prefer to run tests manually:
+
+1. **Start a local blockchain node**
+
+   ```bash
+   cd packages/typescript/signaling-contract
+   npm run network
+   ```
+
+2. **In another terminal, deploy the contract**
+
+   ```bash
+   cd packages/typescript/signaling-contract
+   npm run deploySC
+   ```
+
+3. **Run the tests** (the contract address is auto-detected from `token_info.txt`)
+
+   ```bash
+   cd packages/contract_sdk
+   TEST_RPC_URL=http://localhost:8545 dart test test/signaling_contract_deploy_test.dart
+   ```
+
+## Test Coverage
+
+Current test coverage includes:
+
+- ✅ Hex to bytes conversion
+- ✅ Contract ABI structure
+- ✅ Contract bytecode format
+- ✅ Function signatures (compile-time checks)
+- ⏳ Contract deployment (requires running node)
+- ⏳ Contract connection (requires running node)
+- ⏳ Signal read/write operations (requires running node)
+
+## Debugging Tests
+
+To debug a specific test:
+
+```bash
+dart test --pause-after-load test/signaling_contract_test.dart
+```
+
+Then open the VM debugging interface in your IDE.
+
+## CI/CD Integration
+
+For automated testing in CI/CD pipelines:
+
+```yaml
+# Example GitHub Actions
+- name: Run Dart tests
+  run: dart test
+```
+
+## Notes
+
+- Unit tests run without external dependencies
+- Integration tests require a running blockchain node
+- Test timeouts may need adjustment based on block time
+- Some tests may fail on slow networks or when nodes are congested

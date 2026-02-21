@@ -31,62 +31,34 @@ export type SignalStructOutput = [signal: string, creationTime: bigint] & {
 };
 
 export interface ISignalingInterface extends Interface {
-  getFunction(
-    nameOrSignature: "getAnswer" | "getOffer" | "setAnswer" | "setOffer"
-  ): FunctionFragment;
+  getFunction(nameOrSignature: "getSignal" | "setSignal"): FunctionFragment;
 
-  getEvent(
-    nameOrSignatureOrTopic: "proposeAnswer" | "proposeOffer"
-  ): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "SignalEmitted"): EventFragment;
 
   encodeFunctionData(
-    functionFragment: "getAnswer",
-    values: [AddressLike, AddressLike]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "getOffer",
+    functionFragment: "getSignal",
     values: [AddressLike]
   ): string;
   encodeFunctionData(
-    functionFragment: "setAnswer",
-    values: [BytesLike, AddressLike]
+    functionFragment: "setSignal",
+    values: [BytesLike]
   ): string;
-  encodeFunctionData(functionFragment: "setOffer", values: [BytesLike]): string;
 
-  decodeFunctionResult(functionFragment: "getAnswer", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "getOffer", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "setAnswer", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "setOffer", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "getSignal", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "setSignal", data: BytesLike): Result;
 }
 
-export namespace proposeAnswerEvent {
+export namespace SignalEmittedEvent {
   export type InputTuple = [
-    offerer: AddressLike,
-    answerer: AddressLike,
-    answer: SignalStruct
+    sender: AddressLike,
+    signal: BytesLike,
+    timestamp: BigNumberish
   ];
-  export type OutputTuple = [
-    offerer: string,
-    answerer: string,
-    answer: SignalStructOutput
-  ];
+  export type OutputTuple = [sender: string, signal: string, timestamp: bigint];
   export interface OutputObject {
-    offerer: string;
-    answerer: string;
-    answer: SignalStructOutput;
-  }
-  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
-  export type Filter = TypedDeferredTopicFilter<Event>;
-  export type Log = TypedEventLog<Event>;
-  export type LogDescription = TypedLogDescription<Event>;
-}
-
-export namespace proposeOfferEvent {
-  export type InputTuple = [offerer: AddressLike, offer: SignalStruct];
-  export type OutputTuple = [offerer: string, offer: SignalStructOutput];
-  export interface OutputObject {
-    offerer: string;
-    offer: SignalStructOutput;
+    sender: string;
+    signal: string;
+    timestamp: bigint;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
@@ -137,87 +109,47 @@ export interface ISignaling extends BaseContract {
     event?: TCEvent
   ): Promise<this>;
 
-  getAnswer: TypedContractMethod<
-    [answerer: AddressLike, offerer: AddressLike],
-    [SignalStructOutput],
-    "view"
-  >;
-
-  getOffer: TypedContractMethod<
+  getSignal: TypedContractMethod<
     [offerer: AddressLike],
     [SignalStructOutput],
     "view"
   >;
 
-  setAnswer: TypedContractMethod<
-    [answer: BytesLike, offerer: AddressLike],
+  setSignal: TypedContractMethod<
+    [compressedSignal: BytesLike],
     [void],
     "nonpayable"
   >;
-
-  setOffer: TypedContractMethod<[offer: BytesLike], [void], "nonpayable">;
 
   getFunction<T extends ContractMethod = ContractMethod>(
     key: string | FunctionFragment
   ): T;
 
   getFunction(
-    nameOrSignature: "getAnswer"
-  ): TypedContractMethod<
-    [answerer: AddressLike, offerer: AddressLike],
-    [SignalStructOutput],
-    "view"
-  >;
-  getFunction(
-    nameOrSignature: "getOffer"
+    nameOrSignature: "getSignal"
   ): TypedContractMethod<[offerer: AddressLike], [SignalStructOutput], "view">;
   getFunction(
-    nameOrSignature: "setAnswer"
-  ): TypedContractMethod<
-    [answer: BytesLike, offerer: AddressLike],
-    [void],
-    "nonpayable"
-  >;
-  getFunction(
-    nameOrSignature: "setOffer"
-  ): TypedContractMethod<[offer: BytesLike], [void], "nonpayable">;
+    nameOrSignature: "setSignal"
+  ): TypedContractMethod<[compressedSignal: BytesLike], [void], "nonpayable">;
 
   getEvent(
-    key: "proposeAnswer"
+    key: "SignalEmitted"
   ): TypedContractEvent<
-    proposeAnswerEvent.InputTuple,
-    proposeAnswerEvent.OutputTuple,
-    proposeAnswerEvent.OutputObject
-  >;
-  getEvent(
-    key: "proposeOffer"
-  ): TypedContractEvent<
-    proposeOfferEvent.InputTuple,
-    proposeOfferEvent.OutputTuple,
-    proposeOfferEvent.OutputObject
+    SignalEmittedEvent.InputTuple,
+    SignalEmittedEvent.OutputTuple,
+    SignalEmittedEvent.OutputObject
   >;
 
   filters: {
-    "proposeAnswer(address,address,tuple)": TypedContractEvent<
-      proposeAnswerEvent.InputTuple,
-      proposeAnswerEvent.OutputTuple,
-      proposeAnswerEvent.OutputObject
+    "SignalEmitted(address,bytes,uint256)": TypedContractEvent<
+      SignalEmittedEvent.InputTuple,
+      SignalEmittedEvent.OutputTuple,
+      SignalEmittedEvent.OutputObject
     >;
-    proposeAnswer: TypedContractEvent<
-      proposeAnswerEvent.InputTuple,
-      proposeAnswerEvent.OutputTuple,
-      proposeAnswerEvent.OutputObject
-    >;
-
-    "proposeOffer(address,tuple)": TypedContractEvent<
-      proposeOfferEvent.InputTuple,
-      proposeOfferEvent.OutputTuple,
-      proposeOfferEvent.OutputObject
-    >;
-    proposeOffer: TypedContractEvent<
-      proposeOfferEvent.InputTuple,
-      proposeOfferEvent.OutputTuple,
-      proposeOfferEvent.OutputObject
+    SignalEmitted: TypedContractEvent<
+      SignalEmittedEvent.InputTuple,
+      SignalEmittedEvent.OutputTuple,
+      SignalEmittedEvent.OutputObject
     >;
   };
 }

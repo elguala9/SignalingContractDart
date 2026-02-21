@@ -1,10 +1,13 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // Auto-generated exports for contract bindings
 
+import 'dart:typed_data';
+import 'package:web3dart/web3dart.dart' as web3;
+
 export 'signaling_contract.dart' hide hexToBytes;
 
-// Shared utility functions
-import 'dart:typed_data';
+// Re-export web3dart types with aliases to make them accessible
+export 'package:web3dart/web3dart.dart';
 
 /// Helper function to convert hex string to bytes
 Uint8List hexToBytes(String hex) {

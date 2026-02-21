@@ -59,6 +59,13 @@ function validateBindings() {
     try {
       const artifactContent = JSON.parse(fs.readFileSync(artifactPath, 'utf-8'));
       const contractName = artifactContent.contractName;
+
+      // Mirror the generator: skip interface contracts (starting with I)
+      if (contractName.startsWith('I')) {
+        log(`⏭  Skipping interface contract: ${contractName}`, 'blue');
+        continue;
+      }
+
       const expectedDartFile = path.join(dartOutputDir, `${contractName.toLowerCase()}_contract.dart`);
       
       if (fs.existsSync(expectedDartFile)) {

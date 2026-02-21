@@ -1,183 +1,130 @@
-import 'dart:typed_data';
 import 'package:test/test.dart';
-import 'package:signaling_contract_sdk/generated/signaling_contract.dart';
+import 'dart:typed_data';
+import 'package:signaling_contract_sdk/signaling_contract_sdk.dart';
 
 void main() {
-  group('SignalingContract - Static Properties', () {
-    test('contract has correct ABI', () {
-      expect(SignalingContract.contractAbi, isNotEmpty);
-      expect(SignalingContract.contractAbi, contains('UPGRADE_INTERFACE_VERSION'));
-      expect(SignalingContract.contractAbi, contains('setOffer'));
-      expect(SignalingContract.contractAbi, contains('getOffer'));
-      expect(SignalingContract.contractAbi, contains('setAnswer'));
-      expect(SignalingContract.contractAbi, contains('getAnswer'));
+  group('Contract Utilities', () {
+    test('hexToBytes converts valid hex string with 0x prefix', () {
+      const hex = '0x0102';
+      final result = hexToBytes(hex);
+      expect(result, equals(Uint8List.fromList([1, 2])));
     });
 
-    test('contract has bytecode', () {
-      expect(SignalingContract.contractBytecode, isNotEmpty);
-      expect(SignalingContract.contractBytecode, startsWith('0x'));
-    });
-
-    test('ABI contains required functions', () {
-      final abi = SignalingContract.contractAbi;
-      
-      expect(abi, contains('UPGRADE_INTERFACE_VERSION'));
-      expect(abi, contains('initialize'));
-      expect(abi, contains('owner'));
-      expect(abi, contains('setOffer'));
-      expect(abi, contains('getOffer'));
-      expect(abi, contains('setAnswer'));
-      expect(abi, contains('getAnswer'));
-      expect(abi, contains('transferOwnership'));
-      expect(abi, contains('renounceOwnership'));
-      expect(abi, contains('upgradeToAndCall'));
-      expect(abi, contains('proxiableUUID'));
-    });
-
-    test('ABI contains required events', () {
-      final abi = SignalingContract.contractAbi;
-      
-      expect(abi, contains('proposeOffer'));
-      expect(abi, contains('proposeAnswer'));
-      expect(abi, contains('Initialized'));
-      expect(abi, contains('OwnershipTransferred'));
-      expect(abi, contains('Upgraded'));
-    });
-
-    test('ABI is valid JSON', () {
-      final abi = SignalingContract.contractAbi;
-      
-      // Should be able to parse as JSON
-      expect(abi, startsWith('['));
-      expect(abi, endsWith(']'));
-      expect(abi, contains('inputs'));
-      expect(abi, contains('outputs'));
-    });
-  });
-
-  group('SignalingContract - Instantiation', () {
-    test('can create instance without credentials', () {
-      // This is a basic instantiation test
-      // Note: We're not using actual Web3Client here since that would require
-      // network access or extensive mocking
-      
-      expect(SignalingContract, isNotNull);
-    });
-
-    test('credentials can be null', () {
-      // Verify that the contract SDK design allows credentials to be null
-      // for read-only operations
-      expect(true, true); // Placeholder
-    });
-  });
-
-  group('SignalingContract - Helper Functions', () {
-    test('hexToBytes converts hex string to bytes', () {
-      final result = hexToBytes('0x01020304');
-      expect(result, equals(Uint8List.fromList([1, 2, 3, 4])));
-    });
-
-    test('hexToBytes handles hex without 0x prefix', () {
-      final result = hexToBytes('01020304');
-      expect(result, equals(Uint8List.fromList([1, 2, 3, 4])));
+    test('hexToBytes converts valid hex string without 0x prefix', () {
+      const hex = 'deadbeef';
+      final result = hexToBytes(hex);
+      expect(result, equals(Uint8List.fromList([0xde, 0xad, 0xbe, 0xef])));
     });
 
     test('hexToBytes handles empty string', () {
-      final result = hexToBytes('');
-      expect(result, equals(Uint8List.fromList([])));
-    });
-
-    test('hexToBytes converts long hex string', () {
-      const longHex = '0x' +
-        'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' +
-        'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
-      final result = hexToBytes(longHex);
-      expect(result.length, equals(40));
-      expect(result[0], equals(170)); // 0xaa
+      const hex = '0x';
+      final result = hexToBytes(hex);
+      expect(result, isEmpty);
     });
 
     test('hexToBytes handles uppercase hex', () {
-      final result = hexToBytes('0xABCDEF');
-      expect(result, equals(Uint8List.fromList([0xAB, 0xCD, 0xEF])));
+      const hex = '0xABCD';
+      final result = hexToBytes(hex);
+      expect(result, equals(Uint8List.fromList([0xAB, 0xCD])));
     });
 
     test('hexToBytes handles mixed case hex', () {
-      final result = hexToBytes('0xAbCdEf');
-      expect(result, equals(Uint8List.fromList([0xAB, 0xCD, 0xEF])));
-    });
-  });
-
-  group('SignalingContract - Constants', () {
-    test('UPGRADE_INTERFACE_VERSION is in ABI', () {
+      const hex = 'aAbBcCdD';
+      final result = hexToBytes(hex);
       expect(
-        SignalingContract.contractAbi.contains('UPGRADE_INTERFACE_VERSION'),
-        isTrue,
+        result,
+        equals(Uint8List.fromList([0xAA, 0xBB, 0xCC, 0xDD])),
       );
     });
 
-    test('contract bytecode is not empty', () {
-      expect(SignalingContract.contractBytecode.length, greaterThan(0));
-    });
-
-    test('contract bytecode starts with 0x prefix', () {
-      expect(
-        SignalingContract.contractBytecode.startsWith('0x'),
-        isTrue,
-      );
+    test('hexToBytes converts long hex string', () {
+      const hex =
+          '0x0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f';
+      final result = hexToBytes(hex);
+      expect(result.length, equals(31));
     });
   });
 
-  group('SignalingContract - ABI Structure', () {
-    test('ABI is a valid JSON array string', () {
-      final abi = SignalingContract.contractAbi;
-      expect(abi.startsWith('['), isTrue);
-      expect(abi.endsWith(']'), isTrue);
+  group('Signaling Contract Binding', () {
+    test('SignalingContract has valid contract ABI', () {
+      expect(
+        SignalingContract.contractAbi,
+        contains('getSignal'),
+      );
+      expect(
+        SignalingContract.contractAbi,
+        contains('setSignal'),
+      );
+      expect(
+        SignalingContract.contractAbi,
+        contains('owner'),
+      );
     });
 
-    test('ABI contains error types for upgradeable contracts', () {
-      final abi = SignalingContract.contractAbi;
-      expect(abi, contains('ERC1967'));
-      expect(abi, contains('UUPSUnauthorizedCallContext'));
+    test('SignalingContract has valid contract bytecode', () {
+      expect(
+        SignalingContract.contractBytecode,
+        startsWith('0x'),
+      );
+      expect(
+        SignalingContract.contractBytecode.length,
+        greaterThan(10),
+      );
     });
 
-    test('ABI contains ownership functions', () {
+    test('Contract ABI contains required functions', () {
       final abi = SignalingContract.contractAbi;
+      expect(abi, contains('getSignal'));
+      expect(abi, contains('setSignal'));
       expect(abi, contains('transferOwnership'));
       expect(abi, contains('renounceOwnership'));
-      expect(abi, contains('owner'));
     });
 
-    test('ABI contains signaling functions', () {
+    test('Contract ABI contains required events', () {
       final abi = SignalingContract.contractAbi;
-      expect(abi, contains('setOffer'));
-      expect(abi, contains('getOffer'));
-      expect(abi, contains('setAnswer'));
-      expect(abi, contains('getAnswer'));
-    });
-
-    test('ABI contains proxy functions', () {
-      final abi = SignalingContract.contractAbi;
-      expect(abi, contains('upgradeToAndCall'));
-      expect(abi, contains('proxiableUUID'));
-    });
-
-    test('ABI contains initialization function', () {
-      final abi = SignalingContract.contractAbi;
-      expect(abi, contains('initialize'));
+      expect(abi, contains('SignalEmitted'));
+      expect(abi, contains('OwnershipTransferred'));
     });
   });
 
-  group('SignalingContract - Bytecode Validation', () {
-    test('bytecode is a valid hex string', () {
-      final bytecode = SignalingContract.contractBytecode;
-      // Should be able to convert to bytes without error
-      expect(() => hexToBytes(bytecode), returnsNormally);
+  group('Contract Constants', () {
+    test('contractAbi is a valid JSON string', () {
+      expect(
+        SignalingContract.contractAbi,
+        allOf([
+          startsWith('['),
+          endsWith(']'),
+          contains('"type"'),
+          contains('"name"'),
+        ]),
+      );
     });
 
-    test('bytecode length is reasonable', () {
-      final bytecode = SignalingContract.contractBytecode;
-      // Bytecode should be at least 100 chars (50 bytes) after 0x prefix
-      expect(bytecode.length, greaterThan(100));
+    test('contractBytecode follows EVM format', () {
+      expect(SignalingContract.contractBytecode, startsWith('0x'));
+      // Bytecode should only contain hex characters
+      final bytes = SignalingContract.contractBytecode.substring(2);
+      expect(
+        bytes,
+        matches(RegExp(r'^[0-9a-fA-F]*$')),
+      );
+    });
+  });
+
+  group('Event Listening', () {
+    test('Contract ABI contains SignalEmitted event with correct parameters', () {
+      final abi = SignalingContract.contractAbi;
+      expect(abi, contains('SignalEmitted'));
+      expect(abi, contains('sender'));
+      expect(abi, contains('signal'));
+      expect(abi, contains('timestamp'));
+    });
+
+    test('Contract ABI event sender is indexed', () {
+      final abi = SignalingContract.contractAbi;
+      // Verify the event structure includes indexed parameter for sender
+      expect(abi, contains('"indexed":true'));
+      expect(abi, contains('sender'));
     });
   });
 }

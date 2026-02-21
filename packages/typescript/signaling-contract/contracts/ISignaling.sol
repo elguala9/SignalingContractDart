@@ -10,12 +10,9 @@ struct Signal {
 }
 
 interface ISignaling {
-    event proposeOffer(address indexed offerer, Signal offer);
-    event proposeAnswer(address indexed offerer, address indexed answerer, Signal answer);
+    event SignalEmitted(address indexed sender, bytes signal, uint256 timestamp);
 
-    function setOffer(bytes memory offer) external;
-    function setAnswer(bytes memory answer, address offerer) external;
+    function setSignal(bytes memory compressedSignal) external;
 
-    function getOffer(address offerer) external view returns (Signal memory);
-    function getAnswer(address answerer, address offerer) external view returns (Signal memory);
+    function getSignal(address offerer) external view returns (Signal memory);
 }

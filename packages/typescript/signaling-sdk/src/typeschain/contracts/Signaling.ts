@@ -34,14 +34,12 @@ export interface SignalingInterface extends Interface {
   getFunction(
     nameOrSignature:
       | "UPGRADE_INTERFACE_VERSION"
-      | "getAnswer"
-      | "getOffer"
+      | "getSignal"
       | "initialize"
       | "owner"
       | "proxiableUUID"
       | "renounceOwnership"
-      | "setAnswer"
-      | "setOffer"
+      | "setSignal"
       | "transferOwnership"
       | "upgradeToAndCall"
   ): FunctionFragment;
@@ -50,9 +48,8 @@ export interface SignalingInterface extends Interface {
     nameOrSignatureOrTopic:
       | "Initialized"
       | "OwnershipTransferred"
+      | "SignalEmitted"
       | "Upgraded"
-      | "proposeAnswer"
-      | "proposeOffer"
   ): EventFragment;
 
   encodeFunctionData(
@@ -60,11 +57,7 @@ export interface SignalingInterface extends Interface {
     values?: undefined
   ): string;
   encodeFunctionData(
-    functionFragment: "getAnswer",
-    values: [AddressLike, AddressLike]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "getOffer",
+    functionFragment: "getSignal",
     values: [AddressLike]
   ): string;
   encodeFunctionData(
@@ -81,10 +74,9 @@ export interface SignalingInterface extends Interface {
     values?: undefined
   ): string;
   encodeFunctionData(
-    functionFragment: "setAnswer",
-    values: [BytesLike, AddressLike]
+    functionFragment: "setSignal",
+    values: [BytesLike]
   ): string;
-  encodeFunctionData(functionFragment: "setOffer", values: [BytesLike]): string;
   encodeFunctionData(
     functionFragment: "transferOwnership",
     values: [AddressLike]
@@ -98,8 +90,7 @@ export interface SignalingInterface extends Interface {
     functionFragment: "UPGRADE_INTERFACE_VERSION",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(functionFragment: "getAnswer", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "getOffer", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "getSignal", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "initialize", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
   decodeFunctionResult(
@@ -110,8 +101,7 @@ export interface SignalingInterface extends Interface {
     functionFragment: "renounceOwnership",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(functionFragment: "setAnswer", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "setOffer", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "setSignal", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "transferOwnership",
     data: BytesLike
@@ -147,46 +137,29 @@ export namespace OwnershipTransferredEvent {
   export type LogDescription = TypedLogDescription<Event>;
 }
 
+export namespace SignalEmittedEvent {
+  export type InputTuple = [
+    sender: AddressLike,
+    signal: BytesLike,
+    timestamp: BigNumberish
+  ];
+  export type OutputTuple = [sender: string, signal: string, timestamp: bigint];
+  export interface OutputObject {
+    sender: string;
+    signal: string;
+    timestamp: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
 export namespace UpgradedEvent {
   export type InputTuple = [implementation: AddressLike];
   export type OutputTuple = [implementation: string];
   export interface OutputObject {
     implementation: string;
-  }
-  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
-  export type Filter = TypedDeferredTopicFilter<Event>;
-  export type Log = TypedEventLog<Event>;
-  export type LogDescription = TypedLogDescription<Event>;
-}
-
-export namespace proposeAnswerEvent {
-  export type InputTuple = [
-    offerer: AddressLike,
-    answerer: AddressLike,
-    answer: SignalStruct
-  ];
-  export type OutputTuple = [
-    offerer: string,
-    answerer: string,
-    answer: SignalStructOutput
-  ];
-  export interface OutputObject {
-    offerer: string;
-    answerer: string;
-    answer: SignalStructOutput;
-  }
-  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
-  export type Filter = TypedDeferredTopicFilter<Event>;
-  export type Log = TypedEventLog<Event>;
-  export type LogDescription = TypedLogDescription<Event>;
-}
-
-export namespace proposeOfferEvent {
-  export type InputTuple = [offerer: AddressLike, offer: SignalStruct];
-  export type OutputTuple = [offerer: string, offer: SignalStructOutput];
-  export interface OutputObject {
-    offerer: string;
-    offer: SignalStructOutput;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
@@ -239,13 +212,7 @@ export interface Signaling extends BaseContract {
 
   UPGRADE_INTERFACE_VERSION: TypedContractMethod<[], [string], "view">;
 
-  getAnswer: TypedContractMethod<
-    [answerer: AddressLike, offerer: AddressLike],
-    [SignalStructOutput],
-    "view"
-  >;
-
-  getOffer: TypedContractMethod<
+  getSignal: TypedContractMethod<
     [offerer: AddressLike],
     [SignalStructOutput],
     "view"
@@ -259,13 +226,11 @@ export interface Signaling extends BaseContract {
 
   renounceOwnership: TypedContractMethod<[], [void], "nonpayable">;
 
-  setAnswer: TypedContractMethod<
-    [answer: BytesLike, offerer: AddressLike],
+  setSignal: TypedContractMethod<
+    [compressedSignal: BytesLike],
     [void],
     "nonpayable"
   >;
-
-  setOffer: TypedContractMethod<[offer: BytesLike], [void], "nonpayable">;
 
   transferOwnership: TypedContractMethod<
     [newOwner: AddressLike],
@@ -287,14 +252,7 @@ export interface Signaling extends BaseContract {
     nameOrSignature: "UPGRADE_INTERFACE_VERSION"
   ): TypedContractMethod<[], [string], "view">;
   getFunction(
-    nameOrSignature: "getAnswer"
-  ): TypedContractMethod<
-    [answerer: AddressLike, offerer: AddressLike],
-    [SignalStructOutput],
-    "view"
-  >;
-  getFunction(
-    nameOrSignature: "getOffer"
+    nameOrSignature: "getSignal"
   ): TypedContractMethod<[offerer: AddressLike], [SignalStructOutput], "view">;
   getFunction(
     nameOrSignature: "initialize"
@@ -309,15 +267,8 @@ export interface Signaling extends BaseContract {
     nameOrSignature: "renounceOwnership"
   ): TypedContractMethod<[], [void], "nonpayable">;
   getFunction(
-    nameOrSignature: "setAnswer"
-  ): TypedContractMethod<
-    [answer: BytesLike, offerer: AddressLike],
-    [void],
-    "nonpayable"
-  >;
-  getFunction(
-    nameOrSignature: "setOffer"
-  ): TypedContractMethod<[offer: BytesLike], [void], "nonpayable">;
+    nameOrSignature: "setSignal"
+  ): TypedContractMethod<[compressedSignal: BytesLike], [void], "nonpayable">;
   getFunction(
     nameOrSignature: "transferOwnership"
   ): TypedContractMethod<[newOwner: AddressLike], [void], "nonpayable">;
@@ -344,25 +295,18 @@ export interface Signaling extends BaseContract {
     OwnershipTransferredEvent.OutputObject
   >;
   getEvent(
+    key: "SignalEmitted"
+  ): TypedContractEvent<
+    SignalEmittedEvent.InputTuple,
+    SignalEmittedEvent.OutputTuple,
+    SignalEmittedEvent.OutputObject
+  >;
+  getEvent(
     key: "Upgraded"
   ): TypedContractEvent<
     UpgradedEvent.InputTuple,
     UpgradedEvent.OutputTuple,
     UpgradedEvent.OutputObject
-  >;
-  getEvent(
-    key: "proposeAnswer"
-  ): TypedContractEvent<
-    proposeAnswerEvent.InputTuple,
-    proposeAnswerEvent.OutputTuple,
-    proposeAnswerEvent.OutputObject
-  >;
-  getEvent(
-    key: "proposeOffer"
-  ): TypedContractEvent<
-    proposeOfferEvent.InputTuple,
-    proposeOfferEvent.OutputTuple,
-    proposeOfferEvent.OutputObject
   >;
 
   filters: {
@@ -388,6 +332,17 @@ export interface Signaling extends BaseContract {
       OwnershipTransferredEvent.OutputObject
     >;
 
+    "SignalEmitted(address,bytes,uint256)": TypedContractEvent<
+      SignalEmittedEvent.InputTuple,
+      SignalEmittedEvent.OutputTuple,
+      SignalEmittedEvent.OutputObject
+    >;
+    SignalEmitted: TypedContractEvent<
+      SignalEmittedEvent.InputTuple,
+      SignalEmittedEvent.OutputTuple,
+      SignalEmittedEvent.OutputObject
+    >;
+
     "Upgraded(address)": TypedContractEvent<
       UpgradedEvent.InputTuple,
       UpgradedEvent.OutputTuple,
@@ -397,28 +352,6 @@ export interface Signaling extends BaseContract {
       UpgradedEvent.InputTuple,
       UpgradedEvent.OutputTuple,
       UpgradedEvent.OutputObject
-    >;
-
-    "proposeAnswer(address,address,tuple)": TypedContractEvent<
-      proposeAnswerEvent.InputTuple,
-      proposeAnswerEvent.OutputTuple,
-      proposeAnswerEvent.OutputObject
-    >;
-    proposeAnswer: TypedContractEvent<
-      proposeAnswerEvent.InputTuple,
-      proposeAnswerEvent.OutputTuple,
-      proposeAnswerEvent.OutputObject
-    >;
-
-    "proposeOffer(address,tuple)": TypedContractEvent<
-      proposeOfferEvent.InputTuple,
-      proposeOfferEvent.OutputTuple,
-      proposeOfferEvent.OutputObject
-    >;
-    proposeOffer: TypedContractEvent<
-      proposeOfferEvent.InputTuple,
-      proposeOfferEvent.OutputTuple,
-      proposeOfferEvent.OutputObject
     >;
   };
 }

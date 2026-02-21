@@ -3,7 +3,6 @@
 /* eslint-disable */
 import type {
   BaseContract,
-  BigNumberish,
   BytesLike,
   FunctionFragment,
   Result,
@@ -21,44 +20,42 @@ import type {
   TypedLogDescription,
   TypedListener,
   TypedContractMethod,
-} from "../common";
+} from "../../../common";
 
-export type SignalStruct = { signal: BytesLike; creationTime: BigNumberish };
+export interface OwnableInterface extends Interface {
+  getFunction(
+    nameOrSignature: "owner" | "renounceOwnership" | "transferOwnership"
+  ): FunctionFragment;
 
-export type SignalStructOutput = [signal: string, creationTime: bigint] & {
-  signal: string;
-  creationTime: bigint;
-};
+  getEvent(nameOrSignatureOrTopic: "OwnershipTransferred"): EventFragment;
 
-export interface ISignalingInterface extends Interface {
-  getFunction(nameOrSignature: "getSignal" | "setSignal"): FunctionFragment;
-
-  getEvent(nameOrSignatureOrTopic: "SignalEmitted"): EventFragment;
-
+  encodeFunctionData(functionFragment: "owner", values?: undefined): string;
   encodeFunctionData(
-    functionFragment: "getSignal",
+    functionFragment: "renounceOwnership",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "transferOwnership",
     values: [AddressLike]
   ): string;
-  encodeFunctionData(
-    functionFragment: "setSignal",
-    values: [BytesLike]
-  ): string;
 
-  decodeFunctionResult(functionFragment: "getSignal", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "setSignal", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "renounceOwnership",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "transferOwnership",
+    data: BytesLike
+  ): Result;
 }
 
-export namespace SignalEmittedEvent {
-  export type InputTuple = [
-    sender: AddressLike,
-    signal: BytesLike,
-    timestamp: BigNumberish
-  ];
-  export type OutputTuple = [sender: string, signal: string, timestamp: bigint];
+export namespace OwnershipTransferredEvent {
+  export type InputTuple = [previousOwner: AddressLike, newOwner: AddressLike];
+  export type OutputTuple = [previousOwner: string, newOwner: string];
   export interface OutputObject {
-    sender: string;
-    signal: string;
-    timestamp: bigint;
+    previousOwner: string;
+    newOwner: string;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
@@ -66,11 +63,11 @@ export namespace SignalEmittedEvent {
   export type LogDescription = TypedLogDescription<Event>;
 }
 
-export interface ISignaling extends BaseContract {
-  connect(runner?: ContractRunner | null): ISignaling;
+export interface Ownable extends BaseContract {
+  connect(runner?: ContractRunner | null): Ownable;
   waitForDeployment(): Promise<this>;
 
-  interface: ISignalingInterface;
+  interface: OwnableInterface;
 
   queryFilter<TCEvent extends TypedContractEvent>(
     event: TCEvent,
@@ -109,14 +106,12 @@ export interface ISignaling extends BaseContract {
     event?: TCEvent
   ): Promise<this>;
 
-  getSignal: TypedContractMethod<
-    [offerer: AddressLike],
-    [SignalStructOutput],
-    "view"
-  >;
+  owner: TypedContractMethod<[], [string], "view">;
 
-  setSignal: TypedContractMethod<
-    [compressedSignal: BytesLike],
+  renounceOwnership: TypedContractMethod<[], [void], "nonpayable">;
+
+  transferOwnership: TypedContractMethod<
+    [newOwner: AddressLike],
     [void],
     "nonpayable"
   >;
@@ -126,30 +121,33 @@ export interface ISignaling extends BaseContract {
   ): T;
 
   getFunction(
-    nameOrSignature: "getSignal"
-  ): TypedContractMethod<[offerer: AddressLike], [SignalStructOutput], "view">;
+    nameOrSignature: "owner"
+  ): TypedContractMethod<[], [string], "view">;
   getFunction(
-    nameOrSignature: "setSignal"
-  ): TypedContractMethod<[compressedSignal: BytesLike], [void], "nonpayable">;
+    nameOrSignature: "renounceOwnership"
+  ): TypedContractMethod<[], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "transferOwnership"
+  ): TypedContractMethod<[newOwner: AddressLike], [void], "nonpayable">;
 
   getEvent(
-    key: "SignalEmitted"
+    key: "OwnershipTransferred"
   ): TypedContractEvent<
-    SignalEmittedEvent.InputTuple,
-    SignalEmittedEvent.OutputTuple,
-    SignalEmittedEvent.OutputObject
+    OwnershipTransferredEvent.InputTuple,
+    OwnershipTransferredEvent.OutputTuple,
+    OwnershipTransferredEvent.OutputObject
   >;
 
   filters: {
-    "SignalEmitted(address,bytes,uint256)": TypedContractEvent<
-      SignalEmittedEvent.InputTuple,
-      SignalEmittedEvent.OutputTuple,
-      SignalEmittedEvent.OutputObject
+    "OwnershipTransferred(address,address)": TypedContractEvent<
+      OwnershipTransferredEvent.InputTuple,
+      OwnershipTransferredEvent.OutputTuple,
+      OwnershipTransferredEvent.OutputObject
     >;
-    SignalEmitted: TypedContractEvent<
-      SignalEmittedEvent.InputTuple,
-      SignalEmittedEvent.OutputTuple,
-      SignalEmittedEvent.OutputObject
+    OwnershipTransferred: TypedContractEvent<
+      OwnershipTransferredEvent.InputTuple,
+      OwnershipTransferredEvent.OutputTuple,
+      OwnershipTransferredEvent.OutputObject
     >;
   };
 }

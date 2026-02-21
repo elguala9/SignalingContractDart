@@ -1,60 +1,48 @@
+# This file configures the analyzer, which statically analyzes Dart code to
+# check for errors, warnings, and lints.
+#
+# The issues identified by the analyzer are surfaced in the UI of Dart-enabled
+# IDEs (https://dart.dev/tools#ides-and-editors). The analyzer can also be
+# invoked from the command line by running `flutter analyze`.
+
+# The following line activates a set of recommended lints for Flutter apps,
+# packages, and plugins designed to encourage good coding practices.
 include: package:lints/recommended.yaml
 
 linter:
+  # The lint rules applied to this project can be customized in the
+  # section below to disable rules from the `package:lints/recommended.yaml`
+  # included above or to enable additional rules. A list of all available lints
+  # and their documentation is published at https://dart.dev/lints.
+  #
+  # Instead of disabling a lint rule for the entire project in the
+  # section below, it can also be suppressed for a single line of code
+  # or a single file by using the `// ignore: name_of_lint` and
+  # `// ignore_for_file: name_of_lint` syntax on the line or in the file
+  # producing the lint.
   rules:
-    - always_declare_return_types
-    - always_put_required_named_parameters_first
-    - annotate_overrides
+    - avoid_empty_else
     - avoid_print
     - avoid_relative_lib_imports
-    - avoid_shadowing_type_parameters
-    - avoid_types_as_parameter_names
-    - avoid_void_async
-    - camel_case_extensions
-    - camel_case_types
-    - curly_braces_in_flow_control_structures
-    - empty_catches
-    - file_names
-    - implementation_imports
-    - library_names
-    - library_prefixes
+    - avoid_returning_null
+    - avoid_returning_null_for_future
+    - avoid_returning_this
+    - avoid_slow_async_io
+    - cancel_subscriptions
+    - close_sinks
+    - comment_references
+    - control_flow_in_finally
+    - empty_statements
+    - hash_and_equals
+    - iterable_contains_unrelated_type
+    - list_remove_unrelated_type
+    - literal_only_boolean_expressions
+    - no_adjacent_strings_in_list
     - no_duplicate_case_values
-    - null_closures
-    - package_names
-    - prefer_adjacent_string_concatenation
-    - prefer_collection_literals
-    - prefer_conditional_assignment
-    - prefer_const_constructors
-    - prefer_const_declarations
-    - prefer_expression_function_bodies
-    - prefer_final_fields
-    - prefer_for_elements_to_map_fromIterable
-    - prefer_generic_function_type_aliases
-    - prefer_if_null_operators
-    - prefer_interpolation_to_compose_strings
-    - prefer_is_empty
-    - prefer_is_not_empty
-    - prefer_iterable_whereType
-    - prefer_single_quotes
-    - prefer_spread_collections
-    - recursive_getters
-    - slash_for_doc_comments
-    - type_init_formals
-    - unawaited_futures
-    - unnecessary_const
-    - unnecessary_new
-    - unnecessary_null_in_if_null_operators
-    - unnecessary_this
+    - prefer_void_to_null
+    - throw_in_finally
+    - unnecessary_statements
     - unrelated_type_equality_checks
-    - use_function_type_syntax_for_parameters
-    - use_rethrow_when_possible
-    - valid_regexps
 
-analyzer:
-  strong-mode:
-    implicit-casts: false
-    implicit-dynamic: false
-  errors:
-    missing_required_param: error
-    missing_return: error
-    todo: ignore
+# Additional information about this file can be found at
+# https://dart.dev/guides/language/analysis-options

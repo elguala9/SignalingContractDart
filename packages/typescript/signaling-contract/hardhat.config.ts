@@ -25,7 +25,8 @@ const config: HardhatUserConfig = {
       url: "http://127.0.0.1:8545",
       chainId: 31337,
       gas: 8000000,
-      gasPrice: 1000000000 // 1 gwei
+      gasPrice: 1000000000, // 1 gwei
+      timeout: 40000
     },
     ganache: {
       url: "http://127.0.0.1:7545",

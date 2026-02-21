@@ -58,3 +58,9 @@ scripts:
     run: |
       cd packages/typescript/signaling-contract && npx hardhat clean
       cd ../../contract_sdk && rm -rf .dart_tool build
+
+  # === INTEGRATION TESTING ===
+
+  test:integration:
+    description: Run integration tests (deploys contract and tests with real blockchain)
+    run: node scripts/test-integration.js

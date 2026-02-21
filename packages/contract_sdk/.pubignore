@@ -1,8 +1,26 @@
-# Files to exclude from pub.dev publication
+# Ignore source files
 .dart_tool/
+.gitignore
+.github/
+build/
+coverage/
+doc/api/
+
+# Ignore documentation files
+DART_BINDINGS.md
+PUBLISHING.md
+
+# Ignore test files and directories
+test/
+example/
+
+# IDE files
+.vscode/
 .idea/
-*.iml
-test_output.log
-example/main.exe
-.env
-.env.local
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db

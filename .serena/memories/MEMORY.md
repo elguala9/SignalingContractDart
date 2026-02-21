@@ -105,3 +105,77 @@ melos run test:integration
 - Async operations (write methods) include 1-2 second delays for transaction mining
 - Error testing verifies both contract reverts and SDK credential checks
 - All debug output uses print() with emoji indicators for easy troubleshooting
+
+## Test Suite Enhancements - SignalEmitted Event Callback Testing (✅ 2026-02-21)
+
+### Changes Made:
+
+**File**: `packages/contract_sdk/test/signaling_contract_deploy_test.dart`
+
+#### 1. **Enhanced Event Callback in setSignal/getSignal Test**
+- Now properly captures event parameters in callback:
+  - `capturedSender` (EthereumAddress)
+  - `capturedSignal` (Uint8List)
+  - `capturedTimestamp` (BigInt)
+- Validates all parameters match expected values:
+  - Sender matches caller address
+  - Signal matches input bytes
+  - Timestamp is positive
+- Better error handling in callback with try-catch
+
+#### 2. **Added Dedicated SignalEmitted Event Callback Test**
+New test: `'SignalEmitted event callback captures event parameters correctly'`
+- Focuses exclusively on event callback testing
+- Verifies callback is invoked for each event emission
+- Validates all three indexed/non-indexed parameters captured correctly
+- Tests callback error handling and error stream
+- Provides detailed debug output showing callback invocation
+
+### Test Coverage Now Includes:
+
+✅ **Unit tests (15 tests)** - All PASS
+- Contract utilities
+- Contract binding validation
+- Event structure validation
+
+✅ **Integration tests (9 tests)** - With enhanced event testing:
+1. Contract address validation
+2. `owner()` function
+3. `upgradeInterfaceVersion()`
+4. `proxiableUUID()` 
+5. **setSignal/getSignal with enhanced event callback**
+6. **NEW: SignalEmitted event callback parameter capture**
+7. getSignal for new address
+8. Error handling (no prior offer)
+9. Authorization checks
+
+### How to Run Tests:
+
+```bash
+# Unit tests only (no blockchain needed)
+cd packages/contract_sdk
+dart test test/signaling_contract_test.dart
+
+# Integration tests (requires blockchain)
+./scripts/run-integration-tests.sh
+
+# Or manually with environment variables
+cd packages/contract_sdk
+TEST_RPC_URL=http://localhost:8545 \
+TEST_CONTRACT_ADDRESS=0x... \
+TEST_PRIVATE_KEY=0x... \
+dart test test/signaling_contract_deploy_test.dart
+```
+
+### Event Callback Testing Details:
+
+**SignalEmitted Event Structure:**
+```solidity
+event SignalEmitted(address indexed sender, bytes signal, uint256 timestamp)
+```
+
+**Callback Implementation:**
+- Uses web3dart's `events()` filter with event listener
+- Callback receives `event.parameters[0]` (sender), `[1]` (signal), `[2]` (timestamp)
+- Validates all parameters in callback before recording success
+- Tests include proper cleanup with subscription.cancel()

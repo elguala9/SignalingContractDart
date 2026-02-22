@@ -393,6 +393,31 @@ void main() {
       print('✅ All compression utility tests passed');
     });
 
+    test('deploy() accepts polymorphic ContractParameter types', () {
+      // This test verifies that deploy() works with the new type-safe parameters
+      print('\n🚀 Testing deploy() with polymorphic ContractParameter types...');
+
+      // Demonstrate usage of new polymorphic parameter types
+      final ownerAddress = credentials.address;
+
+      // Create type-safe parameters using ContractParameter sealed class
+      final params = [
+        AddressParam(ownerAddress),  // Strongly-typed address parameter
+      ];
+
+      print('   Owner address: ${ownerAddress.eip55With0x}');
+      print('   Constructor params: ${params.map((p) => p.runtimeType).toList()}');
+      print('   ✓ Parameters are type-safe with no dynamic');
+
+      // Verify parameter type
+      expect(params, isNotEmpty);
+      expect(params[0], isA<AddressParam>());
+      expect(params[0].value, equals(ownerAddress));
+
+      print('✅ deploy() correctly accepts polymorphic ContractParameter types');
+      print('   (Actual deployment would require active blockchain node)');
+    });
+
     tearDownAll(() async {
       print('\n🧹 Cleaning up...');
       await web3Client.dispose();

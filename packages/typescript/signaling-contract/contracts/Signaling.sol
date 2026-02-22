@@ -2,27 +2,23 @@
 pragma solidity ^0.8.24;
 import './ISignaling.sol';
 
-import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract Signaling is ISignaling, UUPSUpgradeable, OwnableUpgradeable{
+contract Signaling is ISignaling, Ownable{
 
     // address -> signal
     mapping (address => Signal) signals;
 
-    uint32 version;
-    uint256[50] _gap;
-
-    function initialize(address owner) public initializer {
-        __Ownable_init(owner);
-    }
-
-
-    function _authorizeUpgrade(address) internal override onlyOwner {
-        version++;
-    }
+    constructor(address owner) Ownable(owner) {}
 
     function setSignal(bytes memory compressedSignal) external override {
+        // Validate gzip format
+        require(compressedSignal.length >= 2, "Invalid compressed data format");
+        require(
+            compressedSignal[0] == 0x1f && compressedSignal[1] == 0x8b,
+            "Data must be in gzip format"
+        );
+
         Signal memory signal = Signal(compressedSignal, block.timestamp);
         signals[msg.sender] = signal;
         emit SignalEmitted(msg.sender, compressedSignal, block.timestamp);

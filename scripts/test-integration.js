@@ -60,6 +60,8 @@ async function waitForHardhat(url, maxRetries = 60) {
         req.end();
       });
       log('Hardhat è pronto!', 'green');
+      // Extra wait to ensure node is fully initialized
+      await sleep(5000);
       return;
     } catch (err) {
       if (i % 10 === 0) {
@@ -118,15 +120,36 @@ async function main() {
   try {
     // 1. Avviare Hardhat node in background
     log('[1/4] Avviando Hardhat node...', 'yellow');
+
+    // Wait a moment to allow TIME_WAIT sockets to clear on Windows
+    log('   Waiting for port 8545 to be available...', 'yellow');
+    await sleep(15000);
+
     hardhatProcess = spawn('npm', ['run', 'network'], {
       cwd: tsContractDir,
-      stdio: 'pipe',
+      stdio: ['ignore', 'pipe', 'pipe'],
       shell: true,
+      env: { ...process.env, NODE_OPTIONS: '--no-warnings' },
     });
 
+    let hardhatStarted = false;
     hardhatProcess.stdout?.on('data', (data) => {
-      if (data.toString().includes('Started HTTP')) {
+      const output = data.toString();
+      if (output.includes('Started HTTP') || output.includes('listening')) {
         log('Hardhat ha avviato il server HTTP', 'green');
+        hardhatStarted = true;
+      }
+      if (process.env.DEBUG_HARDHAT) {
+        console.log('[HARDHAT OUT]', output);
+      }
+    });
+
+    hardhatProcess.stderr?.on('data', (data) => {
+      const errMsg = data.toString();
+      if (errMsg.includes('EADDRINUSE')) {
+        log('⚠️  Port 8545 in use, Hardhat may retry...', 'yellow');
+      } else if (errMsg.trim()) {
+        console.log('[HARDHAT STDERR]', errMsg);
       }
     });
 
@@ -134,9 +157,27 @@ async function main() {
     log('[2/4] Aspettando che Hardhat sia pronto...', 'yellow');
     await waitForHardhat(rpcUrl);
 
-    // 3. Deployare il contratto
+    // 3. Deployare il contratto con retry
     log('[3/4] Deployando il contratto...', 'yellow');
-    await runCommand('npm', ['run', 'deploySC'], tsContractDir, 'Deploy');
+    let deploySuccess = false;
+    let lastError = null;
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try {
+        log(`   Tentativo di deploy ${attempt}/3...`, 'yellow');
+        await runCommand('npm', ['run', 'deploySC'], tsContractDir, 'Deploy');
+        deploySuccess = true;
+        break;
+      } catch (err) {
+        lastError = err;
+        if (attempt < 3) {
+          log(`   Deployment failed, retrying in 5 seconds...`, 'yellow');
+          await sleep(5000);
+        }
+      }
+    }
+    if (!deploySuccess) {
+      throw lastError || new Error('Deploy failed after 3 attempts');
+    }
 
     // Estrarre l'indirizzo
     const contractAddress = fs.readFileSync(tokenInfoPath, 'utf-8').trim();

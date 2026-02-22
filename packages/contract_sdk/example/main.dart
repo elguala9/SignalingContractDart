@@ -12,6 +12,7 @@ import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 import 'package:wallet/wallet.dart';
 import 'package:signaling_contract_sdk/signaling_contract_sdk.dart';
+import 'package:signaling_contract_sdk/generated/signaling_contract_extensions.dart';
 
 Future<void> main() async {
   print('Signaling Contract SDK Example\n');
@@ -27,7 +28,11 @@ Future<void> main() async {
   // Uncomment to run:
   // await setSignal();
 
-  // Example 4: Deploy a new contract
+  // Example 4: Set a signal with automatic compression
+  // Uncomment to run:
+  // await setSignalWithCompression();
+
+  // Example 5: Deploy a new contract
   // Uncomment to run:
   // await deployContract();
 }
@@ -147,9 +152,76 @@ Future<void> setSignal() async {
   }
 }
 
-/// Example 4: Deploy a new contract
+/// Example 4: Set a signal with automatic compression
+///
+/// This example shows how to set a signal with automatic gzip compression.
+/// The data is compressed client-side before being sent to the contract,
+/// reducing storage costs while maintaining data integrity.
+Future<void> setSignalWithCompression() async {
+  print('Example 4: Setting a signal with automatic compression...\n');
+
+  const rpcUrl = 'http://localhost:8545';
+  const contractAddressHex = '0x5FbDB2315678afccb333f8a9c91ff5f8b6e74aaf';
+  // WARNING: Never use private keys in production code!
+  const privateKeyHex = '0xac0974bec39a17e36ba4a6b4d238ff944bacb476cadeee4c811daadc2bae28078';
+
+  try {
+    final credentials = EthPrivateKey.fromHex(privateKeyHex);
+
+    // Create a Web3Client
+    final client = Web3Client(rpcUrl, http.Client());
+
+    // Connect with credentials
+    final contract = await SignalingContract.connectWithClient(
+      client: client,
+      contractAddress: EthereumAddress.fromHex(contractAddressHex),
+      credentials: credentials,
+    );
+
+    // Create raw uncompressed data
+    final rawData = '''
+    {
+      "type": "offer",
+      "sdp": "v=0\r\no=- 123456789 2 IN IP4 127.0.0.1\r\n..."
+    }
+    ''';
+
+    print('Raw data size: ${rawData.length} bytes');
+    print('Sending signal with automatic compression...');
+
+    // Use setSignalCompressed - data is automatically compressed
+    final txHash = await contract.setSignalCompressed(rawData);
+
+    print('✓ Signal sent with compression!');
+    print('  Transaction hash: $txHash\n');
+
+    // Wait for transaction confirmation
+    print('Waiting for transaction confirmation...');
+    await Future.delayed(Duration(seconds: 2));
+
+    // Retrieve and verify the signal
+    final signal = await contract.getSignal(credentials.address);
+    final compressedBytes = signal[0] as Uint8List;
+    final compressionRatio = (compressedBytes.length / rawData.length * 100).toStringAsFixed(1);
+
+    print('✓ Transaction confirmed');
+    print('  Compressed size: ${compressedBytes.length} bytes');
+    print('  Compression ratio: $compressionRatio%\n');
+
+    // Decompress to verify (for demonstration)
+    final decompressed = SignalingDataCompression.decompressToString(compressedBytes);
+    print('  Data verified: ${decompressed.isNotEmpty ? "✓" : "✗"}\n');
+
+    client.dispose();
+  } catch (e) {
+    print('✗ Failed to set signal: $e\n');
+  }
+}
+
+/// Example 5: Deploy a new contract
 ///
 /// This example shows how to deploy a new instance of the contract.
+/// The contract is non-upgradable and requires an owner address in the constructor.
 Future<void> deployContract() async {
   print('Example 4: Deploying a new contract...\n');
 
@@ -159,16 +231,17 @@ Future<void> deployContract() async {
 
   try {
     final credentials = EthPrivateKey.fromHex(privateKeyHex);
+    final ownerAddress = credentials.address;
 
     print('Deploying contract...');
-    print('  Owner: ${credentials.address}');
+    print('  Owner: $ownerAddress');
     print('  RPC URL: $rpcUrl');
 
-    // Deploy the contract
+    // Deploy the contract - pass owner address as constructor parameter
     final contract = await SignalingContract.deploy(
       rpcUrl: rpcUrl,
       credentials: credentials,
-      constructorParams: [],
+      constructorParams: [ownerAddress],
     );
 
     print('\n✓ Contract deployed!');

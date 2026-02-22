@@ -1,5 +1,110 @@
 # Parresia Contract - Project Memory
 
+## GZip Compression Implementation (Feb 22, 2026) ✅ FULLY TESTED
+
+### Implementation Summary
+**All Tests Passing**: 15 unit tests + 9 integration tests ✅
+
+**Solidity Contract (Signaling.sol)**:
+- ✅ setSignal() validates gzip format (magic bytes 0x1f 0x8b)
+- ✅ Requires minimum 2 bytes for gzip header
+- ✅ Rejects non-gzip data with error
+
+**Dart SDK Enhancements**:
+1. **signaling_contract.dart** (auto-generated):
+   - ✅ Now includes chainId field
+   - ✅ connectWithClient() fetches chainId automatically from network
+   - ✅ All write methods pass chainId for EIP-155 signing
+
+2. **signaling_contract_extensions.dart**:
+   - ✅ SignalingDataCompression utility class
+   - ✅ setSignalCompressed() method for automatic compression
+   - ✅ Compression/decompression utilities
+
+3. **generate-dart-bindings.js** (updated):
+   - ✅ Template now includes chainId field
+   - ✅ connectWithClient() fetches and resolves chainId
+   - ✅ All transaction calls pass chainId: chainId
+
+### Test Coverage ✅
+**Unit Tests (15/15 PASS)**:
+- Contract utilities and binding validation
+- Event structure validation
+
+**Integration Tests (9/9 PASS)**:
+1. Contract address validation ✅
+2. owner() retrieval ✅
+3. Non-upgradable verification ✅
+4. **setSignal/getSignal round-trip with compression** ✅
+5. getSignal for new address ✅
+6. **SignalEmitted event callback capture** ✅
+7. Write method authorization ✅
+8. **setSignalCompressed with automatic gzip** ✅
+9. **Compression utility functions** ✅
+
+### Key Fixes Applied
+- ✅ EIP-155 transaction signing (chainId passed to all write operations)
+- ✅ Tests updated to use compressed data
+- ✅ Generator script updated for chainId support
+- ✅ Automatic chainId fetching from network
+
+### Example Usage
+```dart
+// Automatic compression + validation
+final txHash = await sdk.setSignalCompressed("raw data");
+
+// Manual if needed
+final compressed = SignalingDataCompression.compressData(data);
+await sdk.setSignal(compressed);
+
+// Decompress (client-side)
+final decompressed = SignalingDataCompression.decompressToString(bytes);
+```
+
+## GZip Compression Implementation - DEPRECATED (Feb 22, 2026)
+**Solidity Contract Updates**:
+- `setSignal()` in Signaling.sol now validates gzip format (magic bytes 0x1f 0x8b)
+- Requires minimum 2 bytes for gzip header
+- Rejects data that doesn't match gzip format with descriptive error
+
+**Dart Extensions (signaling_contract_extensions.dart)**:
+- Added `SignalingDataCompression` utility class with:
+  - `compressData(data)` - compress String/Uint8List/List<int> to gzip
+  - `decompressData(compressedData)` - decompress gzip data
+  - `decompressToString(compressedData)` - decompress to String
+  - `isGzipFormat(data)` - validate gzip magic bytes (0x1f, 0x8b)
+- Added `setSignalCompressed()` extension method on SignalingContract:
+  - Takes uncompressed data (String or Uint8List)
+  - Automatically compresses using gzip before sending
+  - No manual compression needed by caller
+
+**Tests Added** in signaling_contract_deploy_test.dart:
+- `setSignalCompressed automatically compresses data and validates gzip` - end-to-end
+- `gzip compression utility functions work correctly` - unit tests
+- Verifies compression ratio, gzip format validation, and round-trip decompression
+
+**Example Usage**:
+```dart
+// Automatic compression - simplest way
+final txHash = await sdk.setSignalCompressed("raw uncompressed data");
+
+// Manual compression if needed
+final compressed = SignalingDataCompression.compressData(data);
+await sdk.setSignal(compressed);
+
+// Decompression (client-side only)
+final decompressed = SignalingDataCompression.decompressToString(compressedBytes);
+```
+
+**Key Implementation Details**:
+- Uses Dart's built-in `dart:io` GZipCodec for compression
+- All compression happens client-side before sending to contract
+- Contract validates format but doesn't decompress (saves gas)
+- Backward compatible: setSignal() still works with pre-compressed data
+- Updated example/main.dart with Example 4: compression usage demo
+
+---
+
 ## Test Suite Updates - Integration Tests Implementation (✅ Completata - 2026-02-21)
 
 ### Step 1: Fixed Stale Unit Tests ✅

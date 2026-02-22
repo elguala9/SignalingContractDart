@@ -21,12 +21,29 @@ const config: HardhatUserConfig = {
     ],
   },
   networks: {
+    hardhat: {
+      chainId: 31337,
+      allowUnlimitedContractSize: true,
+      accounts: {
+        mnemonic: "test test test test test test test test test test test junk",
+        path: "m/44'/60'/0'/0",
+        initialIndex: 0,
+        count: 20
+      }
+    },
     localhost: {
       url: "http://127.0.0.1:8545",
       chainId: 31337,
       gas: 8000000,
       gasPrice: 1000000000, // 1 gwei
-      timeout: 40000
+      timeout: 40000,
+      allowUnlimitedContractSize: true,
+      accounts: {
+        mnemonic: "test test test test test test test test test test test junk",
+        path: "m/44'/60'/0'/0",
+        initialIndex: 0,
+        count: 20
+      }
     },
     ganache: {
       url: "http://127.0.0.1:8545",

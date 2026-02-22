@@ -112,7 +112,8 @@ void main() {
   });
 
   group('Event Listening', () {
-    test('Contract ABI contains SignalEmitted event with correct parameters', () {
+    test('Contract ABI contains SignalEmitted event with correct parameters',
+        () {
       final abi = SignalingContract.contractAbi;
       expect(abi, contains('SignalEmitted'));
       expect(abi, contains('sender'));

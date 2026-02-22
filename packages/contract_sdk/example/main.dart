@@ -238,10 +238,11 @@ Future<void> deployContract() async {
     print('  RPC URL: $rpcUrl');
 
     // Deploy the contract - pass owner address as constructor parameter
+    // Using AddressParam for type-safe address parameter
     final contract = await SignalingContract.deploy(
       rpcUrl: rpcUrl,
       credentials: credentials,
-      constructorParams: [ownerAddress],
+      constructorParams: [AddressParam(ownerAddress)],
     );
 
     print('\n✓ Contract deployed!');

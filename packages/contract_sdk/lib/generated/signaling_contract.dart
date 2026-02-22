@@ -1,43 +1,37 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // Generated from Signaling.sol
 
+import 'dart:convert';
 import 'dart:typed_data';
 import 'package:web3dart/web3dart.dart';
+import 'package:wallet/wallet.dart';
 import 'package:http/http.dart' show Client;
-
-// Type aliases for web3dart types to work around analyzer issues
-// These are the actual types from web3dart at runtime
-typedef EthereumAddressType = dynamic;
-typedef Web3ClientType = dynamic;
-typedef EthPrivateKeyType = dynamic;
-typedef DeployedContractType = dynamic;
-typedef ContractAbiType = dynamic;
-typedef TransactionType = dynamic;
-typedef TransactionReceiptType = dynamic;
 
 /// Dart binding for Signaling smart contract
 class SignalingContract {
-  static const String contractAbi = '''[{"inputs":[{"internalType":"address","name":"target","type":"address"}],"name":"AddressEmptyCode","type":"error"},{"inputs":[{"internalType":"address","name":"implementation","type":"address"}],"name":"ERC1967InvalidImplementation","type":"error"},{"inputs":[],"name":"ERC1967NonPayable","type":"error"},{"inputs":[],"name":"FailedCall","type":"error"},{"inputs":[],"name":"InvalidInitialization","type":"error"},{"inputs":[],"name":"NotInitializing","type":"error"},{"inputs":[{"internalType":"address","name":"owner","type":"address"}],"name":"OwnableInvalidOwner","type":"error"},{"inputs":[{"internalType":"address","name":"account","type":"address"}],"name":"OwnableUnauthorizedAccount","type":"error"},{"inputs":[],"name":"UUPSUnauthorizedCallContext","type":"error"},{"inputs":[{"internalType":"bytes32","name":"slot","type":"bytes32"}],"name":"UUPSUnsupportedProxiableUUID","type":"error"},{"anonymous":false,"inputs":[{"indexed":false,"internalType":"uint64","name":"version","type":"uint64"}],"name":"Initialized","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"previousOwner","type":"address"},{"indexed":true,"internalType":"address","name":"newOwner","type":"address"}],"name":"OwnershipTransferred","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"sender","type":"address"},{"indexed":false,"internalType":"bytes","name":"signal","type":"bytes"},{"indexed":false,"internalType":"uint256","name":"timestamp","type":"uint256"}],"name":"SignalEmitted","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"implementation","type":"address"}],"name":"Upgraded","type":"event"},{"inputs":[],"name":"UPGRADE_INTERFACE_VERSION","outputs":[{"internalType":"string","name":"","type":"string"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"offerer","type":"address"}],"name":"getSignal","outputs":[{"components":[{"internalType":"bytes","name":"signal","type":"bytes"},{"internalType":"uint256","name":"creationTime","type":"uint256"}],"internalType":"struct Signal","name":"","type":"tuple"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"owner","type":"address"}],"name":"initialize","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"owner","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"proxiableUUID","outputs":[{"internalType":"bytes32","name":"","type":"bytes32"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"renounceOwnership","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"bytes","name":"compressedSignal","type":"bytes"}],"name":"setSignal","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"newOwner","type":"address"}],"name":"transferOwnership","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"newImplementation","type":"address"},{"internalType":"bytes","name":"data","type":"bytes"}],"name":"upgradeToAndCall","outputs":[],"stateMutability":"payable","type":"function"}]''';
-  static const String contractBytecode = '0x60a060405230608052348015610013575f80fd5b50608051610f1761003a5f395f818161056e0152818161059701526107510152610f175ff3fe608060405260043610610093575f3560e01c8063715018a611610066578063ad3cb1cc1161004c578063ad3cb1cc1461017c578063c4d66de8146101d1578063f2fde38b146101f0575f80fd5b8063715018a6146101225780638da5cb5b14610136575f80fd5b80631329c0a91461009757806316288251146100cc5780634f1ef286146100ed57806352d1902d14610100575b5f80fd5b3480156100a2575f80fd5b506100b66100b1366004610b56565b61020f565b6040516100c39190610bbc565b60405180910390f35b3480156100d7575f80fd5b506100eb6100e6366004610c8a565b6102e4565b005b6100eb6100fb366004610cc4565b61036d565b34801561010b575f80fd5b5061011461038c565b6040519081526020016100c3565b34801561012d575f80fd5b506100eb6103ba565b348015610141575f80fd5b507f9016d09d72d40fdae2fd8ceac6b6234c7706214fd39c1cd1e609a0528c199300546040516001600160a01b0390911681526020016100c3565b348015610187575f80fd5b506101c46040518060400160405280600581526020017f352e302e3000000000000000000000000000000000000000000000000000000081525081565b6040516100c39190610d0f565b3480156101dc575f80fd5b506100eb6101eb366004610b56565b6103cd565b3480156101fb575f80fd5b506100eb61020a366004610b56565b610508565b60408051808201909152606081525f60208201526001600160a01b0382165f9081526020819052604090819020815180830190925280548290829061025390610d21565b80601f016020809104026020016040519081016040528092919081815260200182805461027f90610d21565b80156102ca5780601f106102a1576101008083540402835291602001916102ca565b820191905f5260205f20905b8154815290600101906020018083116102ad57829003601f168201915b505050505081526020016001820154815250509050919050565b60408051808201825282815242602080830191909152335f9081529081905291909120815182919081906103189082610da4565b5060208201518160010155905050336001600160a01b03167f4f7ab02db55c26729a8a9923caf3088122b7a76a6f8a2deba4cff184690add828342604051610361929190610e60565b60405180910390a25050565b610375610563565b61037e8261061a565b6103888282610659565b5050565b5f610395610746565b507f360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc90565b6103c261078f565b6103cb5f610803565b565b7ff0c57e16840df040f15088dc2f81fe391c3923bec73e23a9662efc9c229c6a00805468010000000000000000810460ff16159067ffffffffffffffff165f811580156104175750825b90505f8267ffffffffffffffff1660011480156104335750303b155b905081158015610441575080155b15610478576040517ff92ee8a900000000000000000000000000000000000000000000000000000000815260040160405180910390fd5b845467ffffffffffffffff1916600117855583156104ac57845468ff00000000000000001916680100000000000000001785555b6104b586610880565b831561050057845468ff000000000000000019168555604051600181527fc7f505b2f371ae2175ee4913f4499e1f2633a7b5936321eed1cdaeb6115181d29060200160405180910390a15b505050505050565b61051061078f565b6001600160a01b038116610557576040517f1e4fbdf70000000000000000000000000000000000000000000000000000000081525f60048201526024015b60405180910390fd5b61056081610803565b50565b306001600160a01b037f00000000000000000000000000000000000000000000000000000000000000001614806105fc57507f00000000000000000000000000000000000000000000000000000000000000006001600160a01b03166105f07f360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc546001600160a01b031690565b6001600160a01b031614155b156103cb5760405163703e46dd60e11b815260040160405180910390fd5b61062261078f565b6001805463ffffffff16905f61063783610e81565b91906101000a81548163ffffffff021916908363ffffffff1602179055505050565b816001600160a01b03166352d1902d6040518163ffffffff1660e01b8152600401602060405180830381865afa9250505080156106b3575060408051601f3d908101601f191682019092526106b091810190610eaf565b60015b6106db57604051634c9c8ce360e01b81526001600160a01b038316600482015260240161054e565b7f360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc8114610737576040517faa1d49a40000000000000000000000000000000000000000000000000000000081526004810182905260240161054e565b6107418383610891565b505050565b306001600160a01b037f000000000000000000000000000000000000000000000000000000000000000016146103cb5760405163703e46dd60e11b815260040160405180910390fd5b336107c17f9016d09d72d40fdae2fd8ceac6b6234c7706214fd39c1cd1e609a0528c199300546001600160a01b031690565b6001600160a01b0316146103cb576040517f118cdaa700000000000000000000000000000000000000000000000000000000815233600482015260240161054e565b7f9016d09d72d40fdae2fd8ceac6b6234c7706214fd39c1cd1e609a0528c199300805473ffffffffffffffffffffffffffffffffffffffff1981166001600160a01b03848116918217845560405192169182907f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0905f90a3505050565b6108886108e6565b6105608161094d565b61089a82610955565b6040516001600160a01b038316907fbc7cd75a20ee27fd9adebab32041f755214dbc6bffa90cc0225b39da2e5c2d3b905f90a28051156108de5761074182826109d8565b610388610a4a565b7ff0c57e16840df040f15088dc2f81fe391c3923bec73e23a9662efc9c229c6a005468010000000000000000900460ff166103cb576040517fd7e6bcf800000000000000000000000000000000000000000000000000000000815260040160405180910390fd5b6105106108e6565b806001600160a01b03163b5f0361098a57604051634c9c8ce360e01b81526001600160a01b038216600482015260240161054e565b7f360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc805473ffffffffffffffffffffffffffffffffffffffff19166001600160a01b0392909216919091179055565b60605f80846001600160a01b0316846040516109f49190610ec6565b5f60405180830381855af49150503d805f8114610a2c576040519150601f19603f3d011682016040523d82523d5f602084013e610a31565b606091505b5091509150610a41858383610a82565b95945050505050565b34156103cb576040517fb398979f00000000000000000000000000000000000000000000000000000000815260040160405180910390fd5b606082610a9757610a9282610afa565b610af3565b8151158015610aae57506001600160a01b0384163b155b15610af0576040517f9996b3150000000000000000000000000000000000000000000000000000000081526001600160a01b038516600482015260240161054e565b50805b9392505050565b805115610b0957805160208201fd5b6040517fd6bda27500000000000000000000000000000000000000000000000000000000815260040160405180910390fd5b80356001600160a01b0381168114610b51575f80fd5b919050565b5f60208284031215610b66575f80fd5b610af382610b3b565b5f5b83811015610b89578181015183820152602001610b71565b50505f910152565b5f8151808452610ba8816020860160208601610b6f565b601f01601f19169290920160200192915050565b602081525f825160406020840152610bd76060840182610b91565b9050602084015160408401528091505092915050565b634e487b7160e01b5f52604160045260245ffd5b5f82601f830112610c10575f80fd5b813567ffffffffffffffff80821115610c2b57610c2b610bed565b604051601f8301601f19908116603f01168101908282118183101715610c5357610c53610bed565b81604052838152866020858801011115610c6b575f80fd5b836020870160208301375f602085830101528094505050505092915050565b5f60208284031215610c9a575f80fd5b813567ffffffffffffffff811115610cb0575f80fd5b610cbc84828501610c01565b949350505050565b5f8060408385031215610cd5575f80fd5b610cde83610b3b565b9150602083013567ffffffffffffffff811115610cf9575f80fd5b610d0585828601610c01565b9150509250929050565b602081525f610af36020830184610b91565b600181811c90821680610d3557607f821691505b602082108103610d5357634e487b7160e01b5f52602260045260245ffd5b50919050565b601f82111561074157805f5260205f20601f840160051c81016020851015610d7e5750805b601f840160051c820191505b81811015610d9d575f8155600101610d8a565b5050505050565b815167ffffffffffffffff811115610dbe57610dbe610bed565b610dd281610dcc8454610d21565b84610d59565b602080601f831160018114610e05575f8415610dee5750858301515b5f19600386901b1c1916600185901b178555610500565b5f85815260208120601f198616915b82811015610e3357888601518255948401946001909101908401610e14565b5085821015610e5057878501515f19600388901b60f8161c191681555b5050505050600190811b01905550565b604081525f610e726040830185610b91565b90508260208301529392505050565b5f63ffffffff808316818103610ea557634e487b7160e01b5f52601160045260245ffd5b6001019392505050565b5f60208284031215610ebf575f80fd5b5051919050565b5f8251610ed7818460208701610b6f565b919091019291505056fea2646970667358221220c1806ffdc13a5334b08616c064646621ee4a70050ffcde51174abf92c1eb56a764736f6c63430008180033';
+  static const String contractAbi = '''[{"inputs":[{"internalType":"address","name":"owner","type":"address"}],"stateMutability":"nonpayable","type":"constructor"},{"inputs":[{"internalType":"address","name":"owner","type":"address"}],"name":"OwnableInvalidOwner","type":"error"},{"inputs":[{"internalType":"address","name":"account","type":"address"}],"name":"OwnableUnauthorizedAccount","type":"error"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"previousOwner","type":"address"},{"indexed":true,"internalType":"address","name":"newOwner","type":"address"}],"name":"OwnershipTransferred","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"sender","type":"address"},{"indexed":false,"internalType":"bytes","name":"signal","type":"bytes"},{"indexed":false,"internalType":"uint256","name":"timestamp","type":"uint256"}],"name":"SignalEmitted","type":"event"},{"inputs":[{"internalType":"address","name":"offerer","type":"address"}],"name":"getSignal","outputs":[{"components":[{"internalType":"bytes","name":"signal","type":"bytes"},{"internalType":"uint256","name":"creationTime","type":"uint256"}],"internalType":"struct Signal","name":"","type":"tuple"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"owner","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"renounceOwnership","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"bytes","name":"compressedSignal","type":"bytes"}],"name":"setSignal","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"newOwner","type":"address"}],"name":"transferOwnership","outputs":[],"stateMutability":"nonpayable","type":"function"}]''';
+  static const String contractBytecode = '0x608060405234801561000f575f80fd5b506040516108b73803806108b783398101604081905261002e916100bb565b806001600160a01b03811661005c57604051631e4fbdf760e01b81525f600482015260240160405180910390fd5b6100658161006c565b50506100e8565b5f80546001600160a01b038381166001600160a01b0319831681178455604051919092169283917f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e09190a35050565b5f602082840312156100cb575f80fd5b81516001600160a01b03811681146100e1575f80fd5b9392505050565b6107c2806100f55f395ff3fe608060405234801561000f575f80fd5b5060043610610064575f3560e01c8063715018a61161004d578063715018a6146100a65780638da5cb5b146100ae578063f2fde38b146100c8575f80fd5b80631329c0a9146100685780631628825114610091575b5f80fd5b61007b6100763660046104b3565b6100db565b6040516100889190610523565b60405180910390f35b6100a461009f366004610568565b6101b0565b005b6100a461039e565b5f546040516001600160a01b039091168152602001610088565b6100a46100d63660046104b3565b6103b1565b60408051808201909152606081525f60208201526001600160a01b0382165f9081526001602052604090819020815180830190925280548290829061011f90610613565b80601f016020809104026020016040519081016040528092919081815260200182805461014b90610613565b80156101965780601f1061016d57610100808354040283529160200191610196565b820191905f5260205f20905b81548152906001019060200180831161017957829003601f168201915b505050505081526020016001820154815250509050919050565b6002815110156102075760405162461bcd60e51b815260206004820152601e60248201527f496e76616c696420636f6d70726573736564206461746120666f726d6174000060448201526064015b60405180910390fd5b805f815181106102195761021961064b565b6020910101517fff00000000000000000000000000000000000000000000000000000000000000167f1f000000000000000000000000000000000000000000000000000000000000001480156102c857508060018151811061027d5761027d61064b565b6020910101517fff00000000000000000000000000000000000000000000000000000000000000167f8b00000000000000000000000000000000000000000000000000000000000000145b6103145760405162461bcd60e51b815260206004820152601b60248201527f44617461206d75737420626520696e20677a697020666f726d6174000000000060448201526064016101fe565b60408051808201825282815242602080830191909152335f9081526001909152919091208151829190819061034990826106ab565b5060208201518160010155905050336001600160a01b03167f4f7ab02db55c26729a8a9923caf3088122b7a76a6f8a2deba4cff184690add82834260405161039292919061076b565b60405180910390a25050565b6103a6610407565b6103af5f61044c565b565b6103b9610407565b6001600160a01b0381166103fb576040517f1e4fbdf70000000000000000000000000000000000000000000000000000000081525f60048201526024016101fe565b6104048161044c565b50565b5f546001600160a01b031633146103af576040517f118cdaa70000000000000000000000000000000000000000000000000000000081523360048201526024016101fe565b5f80546001600160a01b038381167fffffffffffffffffffffffff0000000000000000000000000000000000000000831681178455604051919092169283917f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e09190a35050565b5f602082840312156104c3575f80fd5b81356001600160a01b03811681146104d9575f80fd5b9392505050565b5f81518084525f5b81811015610504576020818501810151868301820152016104e8565b505f602082860101526020601f19601f83011685010191505092915050565b602081525f82516040602084015261053e60608401826104e0565b9050602084015160408401528091505092915050565b634e487b7160e01b5f52604160045260245ffd5b5f60208284031215610578575f80fd5b813567ffffffffffffffff8082111561058f575f80fd5b818401915084601f8301126105a2575f80fd5b8135818111156105b4576105b4610554565b604051601f8201601f19908116603f011681019083821181831017156105dc576105dc610554565b816040528281528760208487010111156105f4575f80fd5b826020860160208301375f928101602001929092525095945050505050565b600181811c9082168061062757607f821691505b60208210810361064557634e487b7160e01b5f52602260045260245ffd5b50919050565b634e487b7160e01b5f52603260045260245ffd5b601f8211156106a657805f5260205f20601f840160051c810160208510156106845750805b601f840160051c820191505b818110156106a3575f8155600101610690565b50505b505050565b815167ffffffffffffffff8111156106c5576106c5610554565b6106d9816106d38454610613565b8461065f565b602080601f83116001811461070c575f84156106f55750858301515b5f19600386901b1c1916600185901b178555610763565b5f85815260208120601f198616915b8281101561073a5788860151825594840194600190910190840161071b565b508582101561075757878501515f19600388901b60f8161c191681555b505060018460011b0185555b505050505050565b604081525f61077d60408301856104e0565b9050826020830152939250505056fea2646970667358221220eedc1afeae6a5cfff4abe0dcceabdfa4c6635e35446297b97e3f812d39278ffb64736f6c63430008180033';
 
-  final dynamic client;
-  final dynamic contract;
-  final dynamic credentials;
+  final Web3Client client;
+  final DeployedContract contract;
+  final Credentials? credentials;
+  final int? chainId;
 
   SignalingContract({
     required this.client,
     required this.contract,
     this.credentials,
+    this.chainId,
   });
 
   /// Factory constructor to connect to existing contract
   static Future<SignalingContract> connect({
     required String rpcUrl,
-    required dynamic contractAddress,
-    dynamic credentials,
+    required EthereumAddress contractAddress,
+    Credentials? credentials,
   }) async {
     final client = Web3Client(rpcUrl, Client());
-    
+
     final contract = DeployedContract(
       ContractAbi.fromJson(contractAbi, 'Signaling'),
       contractAddress,
@@ -47,6 +41,7 @@ class SignalingContract {
       client: client,
       contract: contract,
       credentials: credentials,
+      chainId: null,
     );
   }
 
@@ -55,77 +50,164 @@ class SignalingContract {
   /// This method allows using an existing Web3Client instance,
   /// which is useful for connection pooling and management.
   static Future<SignalingContract> connectWithClient({
-    required dynamic client,
-    required dynamic contractAddress,
-    dynamic credentials,
+    required Web3Client client,
+    required EthereumAddress contractAddress,
+    Credentials? credentials,
+    int? chainId,
   }) async {
     final contract = DeployedContract(
       ContractAbi.fromJson(contractAbi, 'Signaling'),
       contractAddress,
     );
 
+    // If chainId not provided, fetch from network
+    int? resolvedChainId = chainId;
+    if (resolvedChainId == null && credentials != null) {
+      try {
+        final chainIdBigInt = await client.getChainId();
+        resolvedChainId = chainIdBigInt.toInt();
+      } catch (e) {
+        // Continue without chainId if unable to fetch
+      }
+    }
+
     return SignalingContract(
       client: client,
       contract: contract,
       credentials: credentials,
+      chainId: resolvedChainId,
     );
   }
 
   /// Deploy new contract instance
   static Future<SignalingContract> deploy({
     required String rpcUrl,
-    required dynamic credentials,
+    required Credentials credentials,
     List<dynamic> constructorParams = const [],
   }) async {
     final client = Web3Client(rpcUrl, Client());
-    
+
+    // Encode constructor parameters if any
+    String deployData = contractBytecode;
+    if (constructorParams.isNotEmpty) {
+      deployData = _encodeDeployData(contractBytecode, constructorParams);
+    }
+
     final transaction = Transaction(
-      from: (credentials as dynamic).address,
-      data: hexToBytes(contractBytecode),
+      from: credentials.address,
+      data: hexToBytes(deployData),
     );
 
     final txHash = await client.sendTransaction(credentials, transaction);
-    
+
     // Wait for transaction receipt and get contract address
-    dynamic receipt;
+    TransactionReceipt? receipt;
     int attempts = 0;
     while (receipt == null && attempts < 60) {
-      await Future.delayed(Duration(seconds: 1));
+      await Future.delayed(const Duration(seconds: 1));
       receipt = await client.getTransactionReceipt(txHash);
       attempts++;
     }
-    
+
     if (receipt == null) {
       throw Exception('Contract deployment failed: transaction receipt not found after 60 seconds');
     }
-    
-    if ((receipt as dynamic).contractAddress == null) {
+
+    final contractAddr = receipt.contractAddress;
+    if (contractAddr == null) {
       throw Exception('Contract deployment failed: no contract address in receipt');
     }
-    
+
     // Return connected instance
     return connect(
       rpcUrl: rpcUrl,
-      contractAddress: (receipt as dynamic).contractAddress!,
+      contractAddress: contractAddr,
       credentials: credentials,
     );
   }
 
+  /// Encode constructor parameters into deployment data
+  static String _encodeDeployData(String bytecode, List<dynamic> params) {
+    try {
+      final List<dynamic> abiList = jsonDecode(contractAbi) as List<dynamic>;
+      final constructor = abiList.firstWhere(
+        (item) => item is Map && item['type'] == 'constructor',
+        orElse: () => null,
+      );
 
-  /// UPGRADE_INTERFACE_VERSION - View function
-  Future<String> upgradeInterfaceVersion() async {
-    final function = contract.function('UPGRADE_INTERFACE_VERSION');
-    final result = await client.call(
-      contract: contract,
-      function: function,
-      params: [],
-    );
-    
-    return result.first as String;
+      if (constructor == null) {
+        return bytecode;
+      }
+
+      final List<dynamic>? inputs = constructor['inputs'] as List<dynamic>?;
+      if (inputs == null || inputs.isEmpty) {
+        return bytecode;
+      }
+
+      final StringBuffer encodedParams = StringBuffer();
+
+      for (int i = 0; i < inputs.length && i < params.length; i++) {
+        final input = inputs[i];
+        if (input is! Map) continue;
+
+        final String? paramType = input['type'] as String?;
+        if (paramType == null) continue;
+
+        final paramValue = params[i];
+        if (paramValue == null) continue;
+
+        final encoded = _encodeParameter(paramType, paramValue);
+        if (encoded != null) {
+          encodedParams.write(encoded);
+        }
+      }
+
+      return bytecode + encodedParams.toString();
+    } catch (e) {
+      print('Warning: Could not encode constructor params: $e');
+      return bytecode;
+    }
   }
 
+  /// Encode a single parameter value based on its Solidity type
+  static String? _encodeParameter(String paramType, dynamic paramValue) {
+    try {
+      if (paramType == 'address') {
+        if (paramValue is EthereumAddress) {
+          // Get hex string without 0x prefix, remove checksum, pad to 64 chars
+          final addressStr = paramValue.toString().replaceAll('0x', '').replaceAll('0X', '');
+          return addressStr.toLowerCase().padLeft(64, '0');
+        }
+        return null;
+      }
+
+      if (paramType.startsWith('uint')) {
+        if (paramValue is BigInt) {
+          return paramValue.toRadixString(16).padLeft(64, '0');
+        } else if (paramValue is int) {
+          return BigInt.from(paramValue).toRadixString(16).padLeft(64, '0');
+        }
+        return null;
+      }
+
+      if (paramType == 'bool') {
+        if (paramValue is bool) {
+          return (paramValue ? '1' : '0').padLeft(64, '0');
+        }
+        return null;
+      }
+
+      // Unsupported type - skip encoding
+      return null;
+    } catch (e) {
+      print('Warning: Could not encode parameter of type $paramType: $e');
+      return null;
+    }
+  }
+
+
   /// getSignal - View function
-  Future<dynamic> getSignal(dynamic offerer) async {
+  Future<List<dynamic>> getSignal(EthereumAddress offerer) async {
     final function = contract.function('getSignal');
     final result = await client.call(
       contract: contract,
@@ -133,28 +215,11 @@ class SignalingContract {
       params: [offerer],
     );
     
-    return result.first as dynamic;
-  }
-
-  /// initialize - Transaction function
-  Future<String> initialize(dynamic owner) async {
-    if (credentials == null) {
-      throw Exception('Credentials required for write operations');
-    }
-
-    final function = contract.function('initialize');
-    final transaction = Transaction.callContract(
-      contract: contract,
-      function: function,
-      parameters: [owner],
-    );
-
-    final txHash = await client.sendTransaction(credentials!, transaction);
-    return txHash;
+    return result.first as List<dynamic>;
   }
 
   /// owner - View function
-  Future<dynamic> owner() async {
+  Future<EthereumAddress> owner() async {
     final function = contract.function('owner');
     final result = await client.call(
       contract: contract,
@@ -162,19 +227,7 @@ class SignalingContract {
       params: [],
     );
     
-    return result.first as dynamic;
-  }
-
-  /// proxiableUUID - View function
-  Future<dynamic> proxiableUUID() async {
-    final function = contract.function('proxiableUUID');
-    final result = await client.call(
-      contract: contract,
-      function: function,
-      params: [],
-    );
-    
-    return result.first as dynamic;
+    return result.first as EthereumAddress;
   }
 
   /// renounceOwnership - Transaction function
@@ -190,7 +243,7 @@ class SignalingContract {
       parameters: [],
     );
 
-    final txHash = await client.sendTransaction(credentials!, transaction);
+    final txHash = await client.sendTransaction(credentials!, transaction, chainId: chainId);
     return txHash;
   }
 
@@ -207,12 +260,12 @@ class SignalingContract {
       parameters: [compressedSignal],
     );
 
-    final txHash = await client.sendTransaction(credentials!, transaction);
+    final txHash = await client.sendTransaction(credentials!, transaction, chainId: chainId);
     return txHash;
   }
 
   /// transferOwnership - Transaction function
-  Future<String> transferOwnership(dynamic newOwner) async {
+  Future<String> transferOwnership(EthereumAddress newOwner) async {
     if (credentials == null) {
       throw Exception('Credentials required for write operations');
     }
@@ -224,24 +277,7 @@ class SignalingContract {
       parameters: [newOwner],
     );
 
-    final txHash = await client.sendTransaction(credentials!, transaction);
-    return txHash;
-  }
-
-  /// upgradeToAndCall - Transaction function
-  Future<String> upgradeToAndCall(dynamic newImplementation, Uint8List data) async {
-    if (credentials == null) {
-      throw Exception('Credentials required for write operations');
-    }
-
-    final function = contract.function('upgradeToAndCall');
-    final transaction = Transaction.callContract(
-      contract: contract,
-      function: function,
-      parameters: [newImplementation, data],
-    );
-
-    final txHash = await client.sendTransaction(credentials!, transaction);
+    final txHash = await client.sendTransaction(credentials!, transaction, chainId: chainId);
     return txHash;
   }
 

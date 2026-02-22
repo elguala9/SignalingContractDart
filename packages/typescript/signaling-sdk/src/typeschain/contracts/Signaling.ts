@@ -33,42 +33,22 @@ export type SignalStructOutput = [signal: string, creationTime: bigint] & {
 export interface SignalingInterface extends Interface {
   getFunction(
     nameOrSignature:
-      | "UPGRADE_INTERFACE_VERSION"
       | "getSignal"
-      | "initialize"
       | "owner"
-      | "proxiableUUID"
       | "renounceOwnership"
       | "setSignal"
       | "transferOwnership"
-      | "upgradeToAndCall"
   ): FunctionFragment;
 
   getEvent(
-    nameOrSignatureOrTopic:
-      | "Initialized"
-      | "OwnershipTransferred"
-      | "SignalEmitted"
-      | "Upgraded"
+    nameOrSignatureOrTopic: "OwnershipTransferred" | "SignalEmitted"
   ): EventFragment;
 
-  encodeFunctionData(
-    functionFragment: "UPGRADE_INTERFACE_VERSION",
-    values?: undefined
-  ): string;
   encodeFunctionData(
     functionFragment: "getSignal",
     values: [AddressLike]
   ): string;
-  encodeFunctionData(
-    functionFragment: "initialize",
-    values: [AddressLike]
-  ): string;
   encodeFunctionData(functionFragment: "owner", values?: undefined): string;
-  encodeFunctionData(
-    functionFragment: "proxiableUUID",
-    values?: undefined
-  ): string;
   encodeFunctionData(
     functionFragment: "renounceOwnership",
     values?: undefined
@@ -81,22 +61,9 @@ export interface SignalingInterface extends Interface {
     functionFragment: "transferOwnership",
     values: [AddressLike]
   ): string;
-  encodeFunctionData(
-    functionFragment: "upgradeToAndCall",
-    values: [AddressLike, BytesLike]
-  ): string;
 
-  decodeFunctionResult(
-    functionFragment: "UPGRADE_INTERFACE_VERSION",
-    data: BytesLike
-  ): Result;
   decodeFunctionResult(functionFragment: "getSignal", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "initialize", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "proxiableUUID",
-    data: BytesLike
-  ): Result;
   decodeFunctionResult(
     functionFragment: "renounceOwnership",
     data: BytesLike
@@ -106,22 +73,6 @@ export interface SignalingInterface extends Interface {
     functionFragment: "transferOwnership",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(
-    functionFragment: "upgradeToAndCall",
-    data: BytesLike
-  ): Result;
-}
-
-export namespace InitializedEvent {
-  export type InputTuple = [version: BigNumberish];
-  export type OutputTuple = [version: bigint];
-  export interface OutputObject {
-    version: bigint;
-  }
-  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
-  export type Filter = TypedDeferredTopicFilter<Event>;
-  export type Log = TypedEventLog<Event>;
-  export type LogDescription = TypedLogDescription<Event>;
 }
 
 export namespace OwnershipTransferredEvent {
@@ -148,18 +99,6 @@ export namespace SignalEmittedEvent {
     sender: string;
     signal: string;
     timestamp: bigint;
-  }
-  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
-  export type Filter = TypedDeferredTopicFilter<Event>;
-  export type Log = TypedEventLog<Event>;
-  export type LogDescription = TypedLogDescription<Event>;
-}
-
-export namespace UpgradedEvent {
-  export type InputTuple = [implementation: AddressLike];
-  export type OutputTuple = [implementation: string];
-  export interface OutputObject {
-    implementation: string;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
@@ -210,19 +149,13 @@ export interface Signaling extends BaseContract {
     event?: TCEvent
   ): Promise<this>;
 
-  UPGRADE_INTERFACE_VERSION: TypedContractMethod<[], [string], "view">;
-
   getSignal: TypedContractMethod<
     [offerer: AddressLike],
     [SignalStructOutput],
     "view"
   >;
 
-  initialize: TypedContractMethod<[owner: AddressLike], [void], "nonpayable">;
-
   owner: TypedContractMethod<[], [string], "view">;
-
-  proxiableUUID: TypedContractMethod<[], [string], "view">;
 
   renounceOwnership: TypedContractMethod<[], [void], "nonpayable">;
 
@@ -238,30 +171,15 @@ export interface Signaling extends BaseContract {
     "nonpayable"
   >;
 
-  upgradeToAndCall: TypedContractMethod<
-    [newImplementation: AddressLike, data: BytesLike],
-    [void],
-    "payable"
-  >;
-
   getFunction<T extends ContractMethod = ContractMethod>(
     key: string | FunctionFragment
   ): T;
 
   getFunction(
-    nameOrSignature: "UPGRADE_INTERFACE_VERSION"
-  ): TypedContractMethod<[], [string], "view">;
-  getFunction(
     nameOrSignature: "getSignal"
   ): TypedContractMethod<[offerer: AddressLike], [SignalStructOutput], "view">;
   getFunction(
-    nameOrSignature: "initialize"
-  ): TypedContractMethod<[owner: AddressLike], [void], "nonpayable">;
-  getFunction(
     nameOrSignature: "owner"
-  ): TypedContractMethod<[], [string], "view">;
-  getFunction(
-    nameOrSignature: "proxiableUUID"
   ): TypedContractMethod<[], [string], "view">;
   getFunction(
     nameOrSignature: "renounceOwnership"
@@ -272,21 +190,7 @@ export interface Signaling extends BaseContract {
   getFunction(
     nameOrSignature: "transferOwnership"
   ): TypedContractMethod<[newOwner: AddressLike], [void], "nonpayable">;
-  getFunction(
-    nameOrSignature: "upgradeToAndCall"
-  ): TypedContractMethod<
-    [newImplementation: AddressLike, data: BytesLike],
-    [void],
-    "payable"
-  >;
 
-  getEvent(
-    key: "Initialized"
-  ): TypedContractEvent<
-    InitializedEvent.InputTuple,
-    InitializedEvent.OutputTuple,
-    InitializedEvent.OutputObject
-  >;
   getEvent(
     key: "OwnershipTransferred"
   ): TypedContractEvent<
@@ -301,26 +205,8 @@ export interface Signaling extends BaseContract {
     SignalEmittedEvent.OutputTuple,
     SignalEmittedEvent.OutputObject
   >;
-  getEvent(
-    key: "Upgraded"
-  ): TypedContractEvent<
-    UpgradedEvent.InputTuple,
-    UpgradedEvent.OutputTuple,
-    UpgradedEvent.OutputObject
-  >;
 
   filters: {
-    "Initialized(uint64)": TypedContractEvent<
-      InitializedEvent.InputTuple,
-      InitializedEvent.OutputTuple,
-      InitializedEvent.OutputObject
-    >;
-    Initialized: TypedContractEvent<
-      InitializedEvent.InputTuple,
-      InitializedEvent.OutputTuple,
-      InitializedEvent.OutputObject
-    >;
-
     "OwnershipTransferred(address,address)": TypedContractEvent<
       OwnershipTransferredEvent.InputTuple,
       OwnershipTransferredEvent.OutputTuple,
@@ -341,17 +227,6 @@ export interface Signaling extends BaseContract {
       SignalEmittedEvent.InputTuple,
       SignalEmittedEvent.OutputTuple,
       SignalEmittedEvent.OutputObject
-    >;
-
-    "Upgraded(address)": TypedContractEvent<
-      UpgradedEvent.InputTuple,
-      UpgradedEvent.OutputTuple,
-      UpgradedEvent.OutputObject
-    >;
-    Upgraded: TypedContractEvent<
-      UpgradedEvent.InputTuple,
-      UpgradedEvent.OutputTuple,
-      UpgradedEvent.OutputObject
     >;
   };
 }

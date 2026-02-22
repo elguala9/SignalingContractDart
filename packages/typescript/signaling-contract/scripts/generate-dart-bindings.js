@@ -39,43 +39,37 @@ function generateDartBinding(contractName, abi, bytecode) {
     const template = `// GENERATED CODE - DO NOT MODIFY BY HAND
 // Generated from ${contractName}.sol
 
+import 'dart:convert';
 import 'dart:typed_data';
 import 'package:web3dart/web3dart.dart';
+import 'package:wallet/wallet.dart';
 import 'package:http/http.dart' show Client;
-
-// Type aliases for web3dart types to work around analyzer issues
-// These are the actual types from web3dart at runtime
-typedef EthereumAddressType = dynamic;
-typedef Web3ClientType = dynamic;
-typedef EthPrivateKeyType = dynamic;
-typedef DeployedContractType = dynamic;
-typedef ContractAbiType = dynamic;
-typedef TransactionType = dynamic;
-typedef TransactionReceiptType = dynamic;
 
 /// Dart binding for ${contractName} smart contract
 class ${className} {
   static const String contractAbi = '''${JSON.stringify(abi)}''';
   static const String contractBytecode = '${bytecode || ''}';
 
-  final dynamic client;
-  final dynamic contract;
-  final dynamic credentials;
+  final Web3Client client;
+  final DeployedContract contract;
+  final Credentials? credentials;
+  final int? chainId;
 
   ${className}({
     required this.client,
     required this.contract,
     this.credentials,
+    this.chainId,
   });
 
   /// Factory constructor to connect to existing contract
   static Future<${className}> connect({
     required String rpcUrl,
-    required dynamic contractAddress,
-    dynamic credentials,
+    required EthereumAddress contractAddress,
+    Credentials? credentials,
   }) async {
     final client = Web3Client(rpcUrl, Client());
-    
+
     final contract = DeployedContract(
       ContractAbi.fromJson(contractAbi, '${contractName}'),
       contractAddress,
@@ -85,6 +79,7 @@ class ${className} {
       client: client,
       contract: contract,
       credentials: credentials,
+      chainId: null,
     );
   }
 
@@ -93,60 +88,159 @@ class ${className} {
   /// This method allows using an existing Web3Client instance,
   /// which is useful for connection pooling and management.
   static Future<${className}> connectWithClient({
-    required dynamic client,
-    required dynamic contractAddress,
-    dynamic credentials,
+    required Web3Client client,
+    required EthereumAddress contractAddress,
+    Credentials? credentials,
+    int? chainId,
   }) async {
     final contract = DeployedContract(
       ContractAbi.fromJson(contractAbi, '${contractName}'),
       contractAddress,
     );
 
+    // If chainId not provided, fetch from network
+    int? resolvedChainId = chainId;
+    if (resolvedChainId == null && credentials != null) {
+      try {
+        final chainIdBigInt = await client.getChainId();
+        resolvedChainId = chainIdBigInt.toInt();
+      } catch (e) {
+        // Continue without chainId if unable to fetch
+      }
+    }
+
     return ${className}(
       client: client,
       contract: contract,
       credentials: credentials,
+      chainId: resolvedChainId,
     );
   }
 
   /// Deploy new contract instance
   static Future<${className}> deploy({
     required String rpcUrl,
-    required dynamic credentials,
+    required Credentials credentials,
     List<dynamic> constructorParams = const [],
   }) async {
     final client = Web3Client(rpcUrl, Client());
-    
+
+    // Encode constructor parameters if any
+    String deployData = contractBytecode;
+    if (constructorParams.isNotEmpty) {
+      deployData = _encodeDeployData(contractBytecode, constructorParams);
+    }
+
     final transaction = Transaction(
-      from: (credentials as dynamic).address,
-      data: hexToBytes(contractBytecode),
+      from: credentials.address,
+      data: hexToBytes(deployData),
     );
 
     final txHash = await client.sendTransaction(credentials, transaction);
-    
+
     // Wait for transaction receipt and get contract address
-    dynamic receipt;
+    TransactionReceipt? receipt;
     int attempts = 0;
     while (receipt == null && attempts < 60) {
-      await Future.delayed(Duration(seconds: 1));
+      await Future.delayed(const Duration(seconds: 1));
       receipt = await client.getTransactionReceipt(txHash);
       attempts++;
     }
-    
+
     if (receipt == null) {
       throw Exception('Contract deployment failed: transaction receipt not found after 60 seconds');
     }
-    
-    if ((receipt as dynamic).contractAddress == null) {
+
+    final contractAddr = receipt.contractAddress;
+    if (contractAddr == null) {
       throw Exception('Contract deployment failed: no contract address in receipt');
     }
-    
+
     // Return connected instance
     return connect(
       rpcUrl: rpcUrl,
-      contractAddress: (receipt as dynamic).contractAddress!,
+      contractAddress: contractAddr,
       credentials: credentials,
     );
+  }
+
+  /// Encode constructor parameters into deployment data
+  static String _encodeDeployData(String bytecode, List<dynamic> params) {
+    try {
+      final List<dynamic> abiList = jsonDecode(contractAbi) as List<dynamic>;
+      final constructor = abiList.firstWhere(
+        (item) => item is Map && item['type'] == 'constructor',
+        orElse: () => null,
+      );
+
+      if (constructor == null) {
+        return bytecode;
+      }
+
+      final List<dynamic>? inputs = constructor['inputs'] as List<dynamic>?;
+      if (inputs == null || inputs.isEmpty) {
+        return bytecode;
+      }
+
+      final StringBuffer encodedParams = StringBuffer();
+
+      for (int i = 0; i < inputs.length && i < params.length; i++) {
+        final input = inputs[i];
+        if (input is! Map) continue;
+
+        final String? paramType = input['type'] as String?;
+        if (paramType == null) continue;
+
+        final paramValue = params[i];
+        if (paramValue == null) continue;
+
+        final encoded = _encodeParameter(paramType, paramValue);
+        if (encoded != null) {
+          encodedParams.write(encoded);
+        }
+      }
+
+      return bytecode + encodedParams.toString();
+    } catch (e) {
+      print('Warning: Could not encode constructor params: \$e');
+      return bytecode;
+    }
+  }
+
+  /// Encode a single parameter value based on its Solidity type
+  static String? _encodeParameter(String paramType, dynamic paramValue) {
+    try {
+      if (paramType == 'address') {
+        if (paramValue is EthereumAddress) {
+          // Get hex string without 0x prefix, remove checksum, pad to 64 chars
+          final addressStr = paramValue.toString().replaceAll('0x', '').replaceAll('0X', '');
+          return addressStr.toLowerCase().padLeft(64, '0');
+        }
+        return null;
+      }
+
+      if (paramType.startsWith('uint')) {
+        if (paramValue is BigInt) {
+          return paramValue.toRadixString(16).padLeft(64, '0');
+        } else if (paramValue is int) {
+          return BigInt.from(paramValue).toRadixString(16).padLeft(64, '0');
+        }
+        return null;
+      }
+
+      if (paramType == 'bool') {
+        if (paramValue is bool) {
+          return (paramValue ? '1' : '0').padLeft(64, '0');
+        }
+        return null;
+      }
+
+      // Unsupported type - skip encoding
+      return null;
+    } catch (e) {
+      print('Warning: Could not encode parameter of type \$paramType: \$e');
+      return null;
+    }
   }
 
 ${generateMethods(abi)}
@@ -221,18 +315,20 @@ function generateTransactionCall(functionName, paramNames) {
       parameters: [${paramNames.join(', ')}],
     );
 
-    final txHash = await client.sendTransaction(credentials!, transaction);
+    final txHash = await client.sendTransaction(credentials!, transaction, chainId: chainId);
     return txHash;`;
 }
 
 function solidityToDartType(solidityType) {
-    // Use dynamic for types that come from web3dart to avoid analyzer issues
-    if (solidityType === 'address') return 'dynamic';
+    if (solidityType === 'address') return 'EthereumAddress';
     if (solidityType === 'bool') return 'bool';
     if (solidityType === 'string') return 'String';
     if (solidityType === 'bytes') return 'Uint8List';
+    if (solidityType.startsWith('bytes')) return 'Uint8List';
     if (solidityType.startsWith('uint') || solidityType.startsWith('int')) return 'BigInt';
     if (solidityType.endsWith('[]')) return `List<${solidityToDartType(solidityType.replace('[]', ''))}>`;
+    // For tuple/struct types, return List<dynamic> since they're complex
+    if (solidityType === 'tuple') return 'List<dynamic>';
     return 'dynamic';
 }
 

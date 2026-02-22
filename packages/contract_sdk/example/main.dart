@@ -92,7 +92,8 @@ Future<void> readContractState() async {
     print('Contract Owner: $owner\n');
 
     // Try to read a signal for a specific address
-    final testAddress = EthereumAddress.fromHex('0x1234567890123456789012345678901234567890');
+    final testAddress =
+        EthereumAddress.fromHex('0x1234567890123456789012345678901234567890');
     final signal = await contract.getSignal(testAddress);
     print('Signal for $testAddress:');
     print('  Data: $signal');
@@ -114,7 +115,8 @@ Future<void> setSignal() async {
   const contractAddressHex = '0x5FbDB2315678afccb333f8a9c91ff5f8b6e74aaf';
   // WARNING: Never use private keys in production code!
   // This is only for development/testing.
-  const privateKeyHex = '0xac0974bec39a17e36ba4a6b4d238ff944bacb476cadeee4c811daadc2bae28078';
+  const privateKeyHex =
+      '0xac0974bec39a17e36ba4a6b4d238ff944bacb476cadeee4c811daadc2bae28078';
 
   try {
     final credentials = EthPrivateKey.fromHex(privateKeyHex);
@@ -163,7 +165,8 @@ Future<void> setSignalWithCompression() async {
   const rpcUrl = 'http://localhost:8545';
   const contractAddressHex = '0x5FbDB2315678afccb333f8a9c91ff5f8b6e74aaf';
   // WARNING: Never use private keys in production code!
-  const privateKeyHex = '0xac0974bec39a17e36ba4a6b4d238ff944bacb476cadeee4c811daadc2bae28078';
+  const privateKeyHex =
+      '0xac0974bec39a17e36ba4a6b4d238ff944bacb476cadeee4c811daadc2bae28078';
 
   try {
     final credentials = EthPrivateKey.fromHex(privateKeyHex);
@@ -202,14 +205,16 @@ Future<void> setSignalWithCompression() async {
     // Retrieve and verify the signal
     final signal = await contract.getSignal(credentials.address);
     final compressedBytes = signal[0] as Uint8List;
-    final compressionRatio = (compressedBytes.length / rawData.length * 100).toStringAsFixed(1);
+    final compressionRatio =
+        (compressedBytes.length / rawData.length * 100).toStringAsFixed(1);
 
     print('✓ Transaction confirmed');
     print('  Compressed size: ${compressedBytes.length} bytes');
     print('  Compression ratio: $compressionRatio%\n');
 
     // Decompress to verify (for demonstration)
-    final decompressed = SignalingDataCompression.decompressToString(compressedBytes);
+    final decompressed =
+        SignalingDataCompression.decompressToString(compressedBytes);
     print('  Data verified: ${decompressed.isNotEmpty ? "✓" : "✗"}\n');
 
     client.dispose();
@@ -227,7 +232,8 @@ Future<void> deployContract() async {
 
   const rpcUrl = 'http://localhost:8545';
   // WARNING: Never use private keys in production code!
-  const privateKeyHex = '0xac0974bec39a17e36ba4a6b4d238ff944bacb476cadeee4c811daadc2bae28078';
+  const privateKeyHex =
+      '0xac0974bec39a17e36ba4a6b4d238ff944bacb476cadeee4c811daadc2bae28078';
 
   try {
     final credentials = EthPrivateKey.fromHex(privateKeyHex);
@@ -247,9 +253,9 @@ Future<void> deployContract() async {
 
     print('\n✓ Contract deployed!');
     print('  Contract address: ${contract.contract.address}\n');
-
   } catch (e) {
     print('✗ Deployment failed: $e');
-    print('  Make sure the blockchain node is running and you have enough funds\n');
+    print(
+        '  Make sure the blockchain node is running and you have enough funds\n');
   }
 }

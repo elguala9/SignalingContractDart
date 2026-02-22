@@ -20,9 +20,10 @@ void main() {
     setUpAll(() async {
       // Read environment variables (set by test orchestration script)
       rpcUrl = Platform.environment['TEST_RPC_URL'] ?? 'http://localhost:8545';
-      contractAddressHex =
-          Platform.environment['TEST_CONTRACT_ADDRESS'] ?? '0x5FbDB2315678afccb333f8a9c91ff5f8b6e74aaf';
-      privateKeyHex = Platform.environment['TEST_PRIVATE_KEY'] ?? '0xac0974bec39a17e36ba4a6b4d238ff944bacb476cadeee4c811daadc2bae2807';
+      contractAddressHex = Platform.environment['TEST_CONTRACT_ADDRESS'] ??
+          '0x5FbDB2315678afccb333f8a9c91ff5f8b6e74aaf';
+      privateKeyHex = Platform.environment['TEST_PRIVATE_KEY'] ??
+          '0xac0974bec39a17e36ba4a6b4d238ff944bacb476cadeee4c811daadc2bae2807';
       if (privateKeyHex.isEmpty || privateKeyHex == '0x') {
         print('ERROR: TEST_PRIVATE_KEY environment variable not set');
         print('       Tests require a blockchain node and credentials to run');
@@ -87,18 +88,23 @@ void main() {
       print('✅ Contract is confirmed non-upgradable (no upgrade functions)');
     });
 
-    test('setSignal and getSignal round-trip with event verification', () async {
-      print('\n📤 Testing setSignal and getSignal round-trip with compression...');
+    test('setSignal and getSignal round-trip with event verification',
+        () async {
+      print(
+          '\n📤 Testing setSignal and getSignal round-trip with compression...');
 
       // Create raw signal data and compress it
       final signalData = {'sdp': 'v=0\r\no=- 123 456 IN IP4 127.0.0.1'};
-      final rawSignalBytes = Uint8List.fromList(utf8.encode(jsonEncode(signalData)));
+      final rawSignalBytes =
+          Uint8List.fromList(utf8.encode(jsonEncode(signalData)));
       print('   Signal data: ${signalData['sdp']}');
       print('   Raw signal bytes length: ${rawSignalBytes.length}');
 
       // Compress the signal
-      final compressedSignalBytes = SignalingDataCompression.compressData(rawSignalBytes);
-      print('   Compressed signal bytes length: ${compressedSignalBytes.length}');
+      final compressedSignalBytes =
+          SignalingDataCompression.compressData(rawSignalBytes);
+      print(
+          '   Compressed signal bytes length: ${compressedSignalBytes.length}');
 
       // Listen for SignalEmitted event with callback
       print('   Setting up event listener with callback...');
@@ -120,7 +126,9 @@ void main() {
           try {
             eventFired = true;
             // Extract indexed sender from topics[1] (topics[0] is event signature)
-            if (event.topics != null && event.topics!.isNotEmpty && event.topics!.length > 1) {
+            if (event.topics != null &&
+                event.topics!.isNotEmpty &&
+                event.topics!.length > 1) {
               final senderTopic = event.topics![1];
               if (senderTopic != null) {
                 capturedSender = EthereumAddress.fromHex(
@@ -152,11 +160,11 @@ void main() {
         subscription.cancel();
 
         // Verify event fired
-        expect(eventFired, isTrue, reason: 'SignalEmitted event should be emitted');
-        if (capturedSender != null) {
-          expect(capturedSender, equals(credentials.address), reason: 'Event sender should match caller');
-          print('   ✓ Event sender verified in callback');
-        }
+        expect(eventFired, isTrue,
+            reason: 'SignalEmitted event should be emitted');
+        expect(capturedSender, equals(credentials.address),
+            reason: 'Event sender should match caller');
+        print('   ✓ Event sender verified in callback');
         print('   ✓ SignalEmitted event verified with callback');
       } catch (e) {
         print('   ⚠️  Event listening: $e (continuing with data verification)');
@@ -176,16 +184,24 @@ void main() {
       expect(receivedSignalBytes, equals(compressedSignalBytes));
 
       // Verify we can decompress it back
-      final decompressed = SignalingDataCompression.decompressData(receivedSignalBytes);
+      final decompressed =
+          SignalingDataCompression.decompressData(receivedSignalBytes);
       expect(decompressed, equals(rawSignalBytes));
-      print('✅ setSignal/getSignal round-trip successful with compression verification');
+      print(
+          '✅ setSignal/getSignal round-trip successful with compression verification');
     });
 
-    test('getSignal returns empty signal for address that never set one', () async {
+    test('getSignal returns empty signal for address that never set one',
+        () async {
       print('\n🔍 Testing getSignal for new address...');
 
       // Use a fresh random address
-      final randomAddressHex = '0x' + DateTime.now().millisecondsSinceEpoch.toRadixString(16).padLeft(40, '0').substring(0, 40);
+      final randomAddressHex = '0x' +
+          DateTime.now()
+              .millisecondsSinceEpoch
+              .toRadixString(16)
+              .padLeft(40, '0')
+              .substring(0, 40);
       final randomAddress = EthereumAddress.fromHex(randomAddressHex);
       print('   Random address (no signal): ${randomAddress.eip55With0x}');
 
@@ -201,13 +217,18 @@ void main() {
       print('✅ getSignal correctly returns empty signal for new address');
     });
 
-    test('SignalEmitted event callback captures event parameters correctly', () async {
+    test('SignalEmitted event callback captures event parameters correctly',
+        () async {
       print('\n📡 Testing SignalEmitted event callback with parameters...');
 
       // Create distinct signal for this test (compress it)
-      final testSignalData = {'test': 'callback-event-test-${DateTime.now().millisecondsSinceEpoch}'};
-      final testSignalRawBytes = Uint8List.fromList(utf8.encode(jsonEncode(testSignalData)));
-      final testSignalBytes = SignalingDataCompression.compressData(testSignalRawBytes);
+      final testSignalData = {
+        'test': 'callback-event-test-${DateTime.now().millisecondsSinceEpoch}'
+      };
+      final testSignalRawBytes =
+          Uint8List.fromList(utf8.encode(jsonEncode(testSignalData)));
+      final testSignalBytes =
+          SignalingDataCompression.compressData(testSignalRawBytes);
 
       // Set up event listening with callback
       print('   Setting up event listener with callback...');
@@ -231,7 +252,9 @@ void main() {
               callbackInvoked = true;
 
               // Event fired - extract sender from indexed topic
-              if (event.topics != null && event.topics!.isNotEmpty && event.topics!.length > 1) {
+              if (event.topics != null &&
+                  event.topics!.isNotEmpty &&
+                  event.topics!.length > 1) {
                 final senderTopic = event.topics![1];
                 if (senderTopic != null) {
                   eventSender = EthereumAddress.fromHex(
@@ -241,15 +264,18 @@ void main() {
               }
 
               print('   ✅ Callback invoked!');
-              print('     - Event received with ${event.topics?.length ?? 0} topics');
+              print(
+                  '     - Event received with ${event.topics?.length ?? 0} topics');
               print('     - Event data: ${event.data?.length ?? 0} bytes');
               if (eventSender != null) {
                 print('     - Sender extracted from topics');
               }
 
               // Validate callback received event
-              expect(event, isNotNull, reason: 'Event should not be null in callback');
-              expect(event.topics, isNotEmpty, reason: 'Event should have topics');
+              expect(event, isNotNull,
+                  reason: 'Event should not be null in callback');
+              expect(event.topics, isNotEmpty,
+                  reason: 'Event should have topics');
             } catch (e) {
               callbackException = e as Exception;
               print('   ❌ Error in callback: $e');
@@ -271,14 +297,16 @@ void main() {
         subscription.cancel();
 
         // Verify callback was invoked
-        expect(callbackInvoked, isTrue, reason: 'Event callback should be invoked');
+        expect(callbackInvoked, isTrue,
+            reason: 'Event callback should be invoked');
         if (callbackException != null) {
           throw callbackException!;
         }
 
         // Verify callback extracted sender correctly
         if (eventSender != null) {
-          expect(eventSender, equals(credentials.address), reason: 'Callback should capture correct sender');
+          expect(eventSender, equals(credentials.address),
+              reason: 'Callback should capture correct sender');
           print('   ✓ Callback sender validation passed');
         }
 
@@ -320,7 +348,8 @@ void main() {
       print('✅ setSignal correctly requires credentials');
     });
 
-    test('setSignalCompressed automatically compresses data and validates gzip', () async {
+    test('setSignalCompressed automatically compresses data and validates gzip',
+        () async {
       print('\n🗜️  Testing automatic data compression...');
 
       // Create raw uncompressed data
@@ -345,7 +374,8 @@ void main() {
       final compressedBytes = retrievedSignal[0] as Uint8List;
 
       print('   Compressed signal length: ${compressedBytes.length} bytes');
-      print('   Compression ratio: ${(compressedBytes.length / rawData.length * 100).toStringAsFixed(1)}%');
+      print(
+          '   Compression ratio: ${(compressedBytes.length / rawData.length * 100).toStringAsFixed(1)}%');
 
       // Verify gzip format (magic numbers)
       expect(SignalingDataCompression.isGzipFormat(compressedBytes), isTrue,
@@ -353,7 +383,8 @@ void main() {
       print('   ✓ Data is in gzip format (magic bytes 0x1f 0x8b detected)');
 
       // Decompress and verify we can read the original data
-      final decompressed = SignalingDataCompression.decompressToString(compressedBytes);
+      final decompressed =
+          SignalingDataCompression.decompressToString(compressedBytes);
       print('   Decompressed data: "$decompressed"');
 
       expect(decompressed, equals(rawData));
@@ -375,14 +406,17 @@ void main() {
       print('   ✓ Gzip format verified');
 
       // Test decompression
-      final decompressed = SignalingDataCompression.decompressToString(compressed);
+      final decompressed =
+          SignalingDataCompression.decompressToString(compressed);
       expect(decompressed, equals(testString));
       print('   ✓ Decompression successful');
 
       // Test with Uint8List
       final testBytes = Uint8List.fromList(utf8.encode('Another test data'));
-      final compressedFromBytes = SignalingDataCompression.compressData(testBytes);
-      expect(SignalingDataCompression.isGzipFormat(compressedFromBytes), isTrue);
+      final compressedFromBytes =
+          SignalingDataCompression.compressData(testBytes);
+      expect(
+          SignalingDataCompression.isGzipFormat(compressedFromBytes), isTrue);
       print('   ✓ Compression from Uint8List works');
 
       // Test isGzipFormat with invalid data
@@ -395,18 +429,20 @@ void main() {
 
     test('deploy() accepts polymorphic ContractParameter types', () {
       // This test verifies that deploy() works with the new type-safe parameters
-      print('\n🚀 Testing deploy() with polymorphic ContractParameter types...');
+      print(
+          '\n🚀 Testing deploy() with polymorphic ContractParameter types...');
 
       // Demonstrate usage of new polymorphic parameter types
       final ownerAddress = credentials.address;
 
       // Create type-safe parameters using ContractParameter sealed class
       final params = [
-        AddressParam(ownerAddress),  // Strongly-typed address parameter
+        AddressParam(ownerAddress), // Strongly-typed address parameter
       ];
 
       print('   Owner address: ${ownerAddress.eip55With0x}');
-      print('   Constructor params: ${params.map((p) => p.runtimeType).toList()}');
+      print(
+          '   Constructor params: ${params.map((p) => p.runtimeType).toList()}');
       print('   ✓ Parameters are type-safe with no dynamic');
 
       // Verify parameter type

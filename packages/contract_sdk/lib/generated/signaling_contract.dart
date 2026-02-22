@@ -7,6 +7,48 @@ import 'package:web3dart/web3dart.dart';
 import 'package:wallet/wallet.dart';
 import 'package:http/http.dart' show Client;
 
+/// Contract parameter type - sealed hierarchy for type-safe parameter handling
+sealed class ContractParameter {
+  const ContractParameter();
+  Object get value;
+}
+
+class AddressParam extends ContractParameter {
+  @override
+  final EthereumAddress value;
+  const AddressParam(this.value);
+}
+
+class UintParam extends ContractParameter {
+  @override
+  final BigInt value;
+  const UintParam(this.value);
+}
+
+class BoolParam extends ContractParameter {
+  @override
+  final bool value;
+  const BoolParam(this.value);
+}
+
+class StringParam extends ContractParameter {
+  @override
+  final String value;
+  const StringParam(this.value);
+}
+
+class BytesParam extends ContractParameter {
+  @override
+  final Uint8List value;
+  const BytesParam(this.value);
+}
+
+class ListParam extends ContractParameter {
+  @override
+  final List<ContractParameter> value;
+  const ListParam(this.value);
+}
+
 /// Dart binding for Signaling smart contract
 class SignalingContract {
   static const String contractAbi = '''[{"inputs":[{"internalType":"address","name":"owner","type":"address"}],"stateMutability":"nonpayable","type":"constructor"},{"inputs":[{"internalType":"address","name":"owner","type":"address"}],"name":"OwnableInvalidOwner","type":"error"},{"inputs":[{"internalType":"address","name":"account","type":"address"}],"name":"OwnableUnauthorizedAccount","type":"error"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"previousOwner","type":"address"},{"indexed":true,"internalType":"address","name":"newOwner","type":"address"}],"name":"OwnershipTransferred","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"sender","type":"address"},{"indexed":false,"internalType":"bytes","name":"signal","type":"bytes"},{"indexed":false,"internalType":"uint256","name":"timestamp","type":"uint256"}],"name":"SignalEmitted","type":"event"},{"inputs":[{"internalType":"address","name":"offerer","type":"address"}],"name":"getSignal","outputs":[{"components":[{"internalType":"bytes","name":"signal","type":"bytes"},{"internalType":"uint256","name":"creationTime","type":"uint256"}],"internalType":"struct Signal","name":"","type":"tuple"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"owner","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"renounceOwnership","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"bytes","name":"compressedSignal","type":"bytes"}],"name":"setSignal","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"newOwner","type":"address"}],"name":"transferOwnership","outputs":[],"stateMutability":"nonpayable","type":"function"}]''';
@@ -83,7 +125,7 @@ class SignalingContract {
   static Future<SignalingContract> deploy({
     required String rpcUrl,
     required Credentials credentials,
-    List<dynamic> constructorParams = const [],
+    List<ContractParameter> constructorParams = const [],
   }) async {
     final client = Web3Client(rpcUrl, Client());
 
@@ -127,19 +169,19 @@ class SignalingContract {
   }
 
   /// Encode constructor parameters into deployment data
-  static String _encodeDeployData(String bytecode, List<dynamic> params) {
+  static String _encodeDeployData(String bytecode, List<ContractParameter> params) {
     try {
-      final List<dynamic> abiList = jsonDecode(contractAbi) as List<dynamic>;
-      final constructor = abiList.firstWhere(
-        (item) => item is Map && item['type'] == 'constructor',
+      final List<Object?> abiList = jsonDecode(contractAbi) as List<Object?>;
+      final constructorItem = abiList.firstWhere(
+        (item) => item is Map<String, Object?> && item['type'] == 'constructor',
         orElse: () => null,
       );
 
-      if (constructor == null) {
+      if (constructorItem == null || constructorItem is! Map<String, Object?>) {
         return bytecode;
       }
 
-      final List<dynamic>? inputs = constructor['inputs'] as List<dynamic>?;
+      final List<Object?>? inputs = constructorItem['inputs'] as List<Object?>?;
       if (inputs == null || inputs.isEmpty) {
         return bytecode;
       }
@@ -148,13 +190,12 @@ class SignalingContract {
 
       for (int i = 0; i < inputs.length && i < params.length; i++) {
         final input = inputs[i];
-        if (input is! Map) continue;
+        if (input is! Map<String, Object?>) continue;
 
         final String? paramType = input['type'] as String?;
         if (paramType == null) continue;
 
         final paramValue = params[i];
-        if (paramValue == null) continue;
 
         final encoded = _encodeParameter(paramType, paramValue);
         if (encoded != null) {
@@ -170,35 +211,29 @@ class SignalingContract {
   }
 
   /// Encode a single parameter value based on its Solidity type
-  static String? _encodeParameter(String paramType, dynamic paramValue) {
+  static String? _encodeParameter(String paramType, ContractParameter paramValue) {
     try {
-      if (paramType == 'address') {
-        if (paramValue is EthereumAddress) {
-          // Get hex string without 0x prefix, remove checksum, pad to 64 chars
-          final addressStr = paramValue.toString().replaceAll('0x', '').replaceAll('0X', '');
-          return addressStr.toLowerCase().padLeft(64, '0');
-        }
-        return null;
-      }
-
-      if (paramType.startsWith('uint')) {
-        if (paramValue is BigInt) {
-          return paramValue.toRadixString(16).padLeft(64, '0');
-        } else if (paramValue is int) {
-          return BigInt.from(paramValue).toRadixString(16).padLeft(64, '0');
-        }
-        return null;
-      }
-
-      if (paramType == 'bool') {
-        if (paramValue is bool) {
-          return (paramValue ? '1' : '0').padLeft(64, '0');
-        }
-        return null;
-      }
-
-      // Unsupported type - skip encoding
-      return null;
+      return switch (paramValue) {
+        AddressParam(:final value) => paramType == 'address'
+            ? value.toString().replaceAll('0x', '').replaceAll('0X', '').toLowerCase().padLeft(64, '0')
+            : null,
+        UintParam(:final value) => paramType.startsWith('uint')
+            ? value.toRadixString(16).padLeft(64, '0')
+            : null,
+        BoolParam(:final value) => paramType == 'bool'
+            ? (value ? '1' : '0').padLeft(64, '0')
+            : null,
+        BytesParam(:final value) => paramType.startsWith('bytes')
+            ? value.map((b) => b.toRadixString(16).padLeft(2, '0')).join('')
+            : null,
+        ListParam(:final value) => paramType.contains('[]')
+            ? value.fold<String>('', (String acc, ContractParameter p) {
+              final encoded = _encodeParameter(paramType.replaceAll('[]', ''), p);
+              return encoded != null ? acc + encoded : acc;
+            })
+            : null,
+        StringParam(:final value) => null, // String encoding requires hash, complex
+      };
     } catch (e) {
       print('Warning: Could not encode parameter of type $paramType: $e');
       return null;
@@ -207,7 +242,7 @@ class SignalingContract {
 
 
   /// getSignal - View function
-  Future<List<dynamic>> getSignal(EthereumAddress offerer) async {
+  Future<Map<String, Object?>> getSignal(EthereumAddress offerer) async {
     final function = contract.function('getSignal');
     final result = await client.call(
       contract: contract,
@@ -215,7 +250,7 @@ class SignalingContract {
       params: [offerer],
     );
     
-    return result.first as List<dynamic>;
+    return result.first as Map<String, Object?>;
   }
 
   /// owner - View function

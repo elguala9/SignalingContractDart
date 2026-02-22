@@ -362,9 +362,9 @@ function solidityToDartType(solidityType) {
     if (solidityType.startsWith('bytes')) return 'Uint8List';
     if (solidityType.startsWith('uint') || solidityType.startsWith('int')) return 'BigInt';
     if (solidityType.endsWith('[]')) return `List<${solidityToDartType(solidityType.replace('[]', ''))}>`;
-    // For tuple/struct types, use Map for flexibility
-    if (solidityType === 'tuple') return 'Map<String, Object?>';
-    // Unknown type - still Object? instead of dynamic for type safety
+    // For tuple/struct types, web3dart returns as List (not Map)
+    if (solidityType === 'tuple') return 'List<Object?>';
+    // Unknown type - use Object? instead of dynamic for type safety
     return 'Object?';
 }
 

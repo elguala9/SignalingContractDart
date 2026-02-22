@@ -242,7 +242,7 @@ class SignalingContract {
 
 
   /// getSignal - View function
-  Future<Map<String, Object?>> getSignal(EthereumAddress offerer) async {
+  Future<List<Object?>> getSignal(EthereumAddress offerer) async {
     final function = contract.function('getSignal');
     final result = await client.call(
       contract: contract,
@@ -250,7 +250,7 @@ class SignalingContract {
       params: [offerer],
     );
     
-    return result.first as Map<String, Object?>;
+    return result.first as List<Object?>;
   }
 
   /// owner - View function

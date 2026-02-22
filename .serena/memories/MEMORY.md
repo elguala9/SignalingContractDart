@@ -1,5 +1,142 @@
 # Parresia Contract - Project Memory
 
+## Melos 7.4.0 Configuration (Feb 22, 2026) ✅
+
+### Version Update
+- **Before**: melos ^6.0.0
+- **After**: melos ^7.4.0
+- All scripts migrated from `melos.yaml` to `pubspec.yaml`
+
+### Key Change in Melos 7
+Melos 7 requires scripts in `pubspec.yaml` under `melos:scripts:` section:
+```yaml
+melos:
+  scripts:
+    contracts:build:
+      description: ...
+      run: ...
+```
+
+**NOT** in a separate `melos.yaml` or top-level `scripts:` section.
+
+### Workspace Configuration
+- Added `packages:` section to pubspec.yaml
+- Currently includes: `packages/contract_sdk`
+- TypeScript projects excluded (not Dart packages)
+
+### Available Commands
+```bash
+dart run melos run contracts:build        # Build contracts + generate bindings
+dart run melos run contracts:build:dart   # Generate bindings only
+dart run melos run contracts:build:typechain  # Generate TypeChain types
+dart run melos run analyze                # Analyze all Dart packages
+dart run melos run test                   # Run all tests
+dart run melos run format                 # Format Dart code
+dart run melos run get                    # Get dependencies
+dart run melos run dev:setup              # Full dev setup
+dart run melos run clean                  # Clean build artifacts
+dart run melos run test:integration       # Run integration tests
+```
+
+### Testing
+✅ `dart run melos run contracts:build:dart` - Verified working
+✅ Script execution and output confirmed
+
+### Commit
+- 0c1a12a - chore: update melos to 7.4.0 and move scripts to pubspec.yaml melos:scripts
+
+## Code Style Preferences
+- **Dart**: ❌ Evita `dynamic` - Usa polimorfismo (interfacce, classi astratte, tipi generici) al posto di `dynamic`
+
+## Dart Bindings Refactoring - Removed All `dynamic` (Feb 22, 2026) ✅
+
+### Summary
+Eliminati tutti gli usi di `dynamic` dal generatore di Dart bindings usando **polimorfismo con sealed class**.
+
+### Changes Made
+
+**1. generate-dart-bindings.js**:
+- ✅ Aggiunta gerarchia sealed class `ContractParameter`:
+  - `AddressParam` - per indirizzi Ethereum
+  - `UintParam` - per numeri BigInt
+  - `BoolParam` - per valori booleani
+  - `StringParam` - per stringhe
+  - `BytesParam` - per Uint8List
+  - `ListParam` - per liste di parametri
+- ✅ `deploy()` metodo: `List<dynamic>` → `List<ContractParameter>`
+- ✅ `_encodeDeployData()`: `List<dynamic>` → `List<ContractParameter>`
+- ✅ `_encodeParameter()`: `dynamic paramValue` → `ContractParameter paramValue` + pattern matching
+- ✅ `solidityToDartType()`: 
+  - `List<dynamic>` (tuple) → `Map<String, Object?>`
+  - `dynamic` (fallback) → `Object?`
+- ✅ `getReturnType()`: `List<dynamic>` → `List<Object?>`
+
+**2. signaling_contract.dart (generato)**:
+- ✅ Ora genera con tipi parametrici strongly-typed
+- ✅ Zero occorrenze di `dynamic` nel file
+
+**3. example/main.dart**:
+- ✅ Aggiornato `deployContract()`: `[ownerAddress]` → `[AddressParam(ownerAddress)]`
+- ✅ Mostra uso corretto di tipi polimorfici
+
+### Test Results
+- ✅ 14/14 unit tests PASSING
+- ✅ No compilation errors
+- ✅ Type-safe parameter handling
+
+### Type Conversion Pattern
+```dart
+// Prima (dynamic)
+constructorParams: [ownerAddress]  // Unsafe, any type accepted
+
+// Dopo (polimorfismo)
+constructorParams: [AddressParam(ownerAddress)]  // Type-safe, compile-time checked
+```
+
+### Codifica Parametri
+Pattern matching switch per type-safe encoding:
+- AddressParam → lowercase hex 64-char padded
+- UintParam → hex radix string 64-char padded
+- BoolParam → '1' o '0' padded
+- BytesParam → hex byte-by-byte
+- ListParam → ricorsiva con fold tipizzato
+- StringParam → null (richiede keccak hash)
+
+## Test Results - Complete Suite ✅ (Feb 22, 2026)
+
+### Unit Tests: 14/14 PASSING ✓
+```
+✅ hexToBytes conversions (6 tests)
+✅ SignalingContract binding validation (3 tests)
+✅ Contract constants (2 tests)
+✅ Event listening (2 tests)
+✅ All tests passed!
+```
+
+### Integration Tests: 10/10 PASSING ✓
+```
+✅ Test setup with BlockchainConnection
+✅ Contract address is valid
+✅ owner() returns valid EthereumAddress
+✅ contract is non-upgradable
+✅ setSignal/getSignal round-trip with compression
+✅ getSignal returns empty signal for new address
+✅ SignalEmitted event callback parameter capture
+✅ write methods throw without credentials
+✅ setSignalCompressed auto-compression & validation
+✅ gzip compression utilities
+✅ deploy() accepts polymorphic ContractParameter types
+✅ Web3Client disposal
+```
+
+### Commits
+- 378ffa6 - refactor: eliminate all dynamic types with polymorphic sealed classes
+- f323d47 - test: add polymorphic ContractParameter test & fix struct return types
+
+### Key Fix
+- Structs (tuple type) in Solidity return as `List<Object?>` from web3dart, not `Map`
+- Fixed: `solidityToDartType('tuple')` now returns `List<Object?>` instead of `Map<String, Object?>`
+
 ## GZip Compression Implementation (Feb 22, 2026) ✅ FULLY TESTED
 
 ### Implementation Summary

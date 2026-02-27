@@ -380,6 +380,10 @@ function generateBindings() {
     console.log('🔄 Generating Dart bindings...');
     console.log(`📁 Artifacts dir: ${artifactsDir}`);
     console.log(`📁 Output dir: ${dartOutputDir}`);
+
+    // IMPORTANT: signaling_contract_extensions.dart is NOT auto-generated
+    // It is maintained manually in lib/ and should never be created or modified by this script
+    console.log('📌 Note: signaling_contract_extensions.dart is maintained separately and will not be modified');
     
     // Verifica che la directory di destinazione esista
     if (!fs.existsSync(contractSdkPath)) {
@@ -445,12 +449,20 @@ function generateBindings() {
 function generateExportFile() {
     const files = fs.readdirSync(dartOutputDir);
     const exports = files
-        .filter(file => file.endsWith('_contract.dart'))
+        .filter(file => {
+            // Only export contract bindings, exclude extensions file
+            if (file === 'signaling_contract_extensions.dart') {
+                console.log('⚠️  Skipping signaling_contract_extensions.dart (manually maintained)');
+                return false;
+            }
+            return file.endsWith('_contract.dart');
+        })
         .map(file => `export '${file}' hide hexToBytes;`)
         .join('\n');
 
     const exportContent = `// GENERATED CODE - DO NOT MODIFY BY HAND
 // Auto-generated exports for contract bindings
+// NOTE: signaling_contract_extensions.dart is NOT included here (manually maintained in lib/)
 
 import 'dart:typed_data';
 import 'package:web3dart/web3dart.dart' as web3;

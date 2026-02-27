@@ -11,7 +11,7 @@ import 'package:web3dart/web3dart.dart' as web3;
 import 'package:wallet/wallet.dart' show EthereumAddress;
 
 // Import generated file and make types available
-import 'signaling_contract.dart';
+import 'generated/signaling_contract.dart';
 
 /// Utility functions for data compression and validation
 class SignalingDataCompression {
@@ -102,6 +102,41 @@ extension SignalingContractExtension on SignalingContract {
   Future<String> setSignalCompressed(dynamic data) async {
     final compressedData = SignalingDataCompression.compressData(data);
     return setSignal(compressedData);
+  }
+
+  /// Get signal with automatic gzip decompression
+  ///
+  /// This method retrieves the compressed signal for an offerer address
+  /// and automatically decompresses it before returning.
+  ///
+  /// Returns: A Future that resolves to a String containing the decompressed signal
+  /// Throws: FormatException if the data is not valid gzip format
+  ///
+  /// Example:
+  /// ```dart
+  /// final decompressed = await sdk.getSignalCompressed(offererAddress);
+  /// print('Decompressed signal: $decompressed');
+  /// ```
+  Future<String> getSignalCompressed(EthereumAddress offerer) async {
+    final signalData = await getSignal(offerer);
+
+    // Extract signal bytes from struct (first element of the tuple)
+    if (signalData.isEmpty) {
+      throw StateError('No signal found for this offerer');
+    }
+
+    final signalBytes = signalData[0];
+    if (signalBytes is! Uint8List) {
+      throw FormatException('Signal data is not in expected format');
+    }
+
+    // Validate gzip format
+    if (!SignalingDataCompression.isGzipFormat(signalBytes)) {
+      throw FormatException('Signal data is not in gzip format');
+    }
+
+    // Decompress and return as string
+    return SignalingDataCompression.decompressToString(signalBytes);
   }
 
   /// Listen to SignalEmitted events with optional sender filter

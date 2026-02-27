@@ -5,4 +5,4 @@
 library signaling_contract_sdk;
 
 export 'generated/contracts.dart';
-export 'generated/signaling_contract_extensions.dart';
+export 'signaling_contract_extensions.dart';

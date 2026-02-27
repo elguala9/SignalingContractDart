@@ -12,7 +12,6 @@ import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 import 'package:wallet/wallet.dart';
 import 'package:signaling_contract_sdk/signaling_contract_sdk.dart';
-import 'package:signaling_contract_sdk/generated/signaling_contract_extensions.dart';
 
 Future<void> main() async {
   print('Signaling Contract SDK Example\n');

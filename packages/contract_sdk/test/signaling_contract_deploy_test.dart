@@ -5,8 +5,7 @@ import 'package:test/test.dart';
 import 'package:http/http.dart' as http;
 import 'package:web3dart/web3dart.dart';
 import 'package:wallet/wallet.dart';
-import 'package:signaling_contract_sdk/generated/contracts.dart';
-import 'package:signaling_contract_sdk/generated/signaling_contract_extensions.dart';
+import 'package:signaling_contract_sdk/signaling_contract_sdk.dart';
 
 void main() {
   group('SignalingContract SDK Integration Tests', () {
@@ -389,6 +388,40 @@ void main() {
 
       expect(decompressed, equals(rawData));
       print('✅ setSignalCompressed works correctly with gzip validation');
+    });
+
+    test('getSignalCompressed automatically decompresses data', () async {
+      print('\n📥 Testing automatic data decompression with getSignalCompressed...');
+
+      // Create raw uncompressed data
+      final rawData = 'This is the test data that will be compressed and retrieved!';
+      print('   Raw data: "$rawData"');
+      print('   Raw data length: ${rawData.length} bytes');
+
+      // Manually compress the data
+      final compressedData = SignalingDataCompression.compressData(rawData);
+      print('   Compressed data length: ${compressedData.length} bytes');
+      print('   Compression ratio: ${(100 * (1 - compressedData.length / rawData.length)).toStringAsFixed(1)}%');
+
+      // Send the compressed data using setSignal
+      print('   Sending compressed signal...');
+      final txHash = await sdk.setSignal(compressedData);
+      print('   Transaction hash: $txHash');
+
+      expect(txHash, isNotEmpty);
+      expect(txHash, startsWith('0x'));
+
+      // Wait for transaction to be mined
+      await Future.delayed(Duration(seconds: 2));
+
+      // Use getSignalCompressed to automatically decompress
+      print('   Retrieving and decompressing signal...');
+      final decompressed = await sdk.getSignalCompressed(credentials.address);
+      print('   Decompressed data: "$decompressed"');
+
+      // Verify the decompressed data matches the original
+      expect(decompressed, equals(rawData));
+      print('✅ getSignalCompressed correctly decompresses the data');
     });
 
     test('gzip compression utility functions work correctly', () {

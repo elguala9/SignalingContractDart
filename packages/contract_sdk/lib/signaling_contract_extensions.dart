@@ -13,26 +13,53 @@ import 'package:wallet/wallet.dart' show EthereumAddress;
 // Import generated file and make types available
 import 'generated/signaling_contract.dart';
 
+/// Type-safe data for compression - sealed class ensures type safety
+sealed class CompressibleData {
+  const CompressibleData();
+}
+
+/// String data to compress
+class StringData extends CompressibleData {
+  final String value;
+  const StringData(this.value);
+}
+
+/// Bytes data to compress
+class BytesData extends CompressibleData {
+  final Uint8List value;
+  const BytesData(this.value);
+}
+
+/// List of integers to compress
+class IntListData extends CompressibleData {
+  final List<int> value;
+  const IntListData(this.value);
+}
+
 /// Utility functions for data compression and validation
 class SignalingDataCompression {
   /// Compress data using gzip format
   ///
-  /// Accepts String, Uint8List, or List<int> and returns gzip-compressed bytes.
-  /// Type-safe: pass String, Uint8List, or List<int>
-  static Uint8List compressData(Object data) {
-    final List<int> rawBytes;
-
-    if (data is String) {
-      rawBytes = utf8.encode(data);
-    } else if (data is Uint8List) {
-      rawBytes = data;
-    } else if (data is List<int>) {
-      rawBytes = data;
-    } else {
-      throw ArgumentError(
-        'Data must be String, Uint8List, or List<int>, got ${data.runtimeType}',
-      );
-    }
+  /// Type-safe: accepts CompressibleData (StringData, BytesData, or IntListData)
+  ///
+  /// Example:
+  /// ```dart
+  /// // Compress a string
+  /// final compressed = SignalingDataCompression.compressData(
+  ///   StringData('Hello, World!')
+  /// );
+  ///
+  /// // Compress bytes
+  /// final compressed = SignalingDataCompression.compressData(
+  ///   BytesData(myBytes)
+  /// );
+  /// ```
+  static Uint8List compressData(CompressibleData data) {
+    final List<int> rawBytes = switch (data) {
+      StringData(:final value) => utf8.encode(value),
+      BytesData(:final value) => value,
+      IntListData(:final value) => value,
+    };
 
     final codec = GZipCodec();
     final compressed = codec.encode(rawBytes);
@@ -91,16 +118,23 @@ extension SignalingContractExtension on SignalingContract {
 
   /// Set signal with automatic gzip compression
   ///
-  /// This method takes raw data (String or Uint8List) and automatically
-  /// compresses it using gzip before sending to the contract.
+  /// This method takes typed CompressibleData and automatically compresses it
+  /// using gzip before sending to the contract.
   ///
   /// Example:
   /// ```dart
-  /// final dataToCompress = "Hello, World!";
-  /// final txHash = await sdk.setSignalCompressed(dataToCompress);
+  /// // Compress and send a string
+  /// final txHash = await sdk.setSignalCompressed(
+  ///   StringData("Hello, World!")
+  /// );
   /// print('Transaction: $txHash');
+  ///
+  /// // Compress and send bytes
+  /// final txHash = await sdk.setSignalCompressed(
+  ///   BytesData(myBytes)
+  /// );
   /// ```
-  Future<String> setSignalCompressed(Object data) async {
+  Future<String> setSignalCompressed(CompressibleData data) async {
     final compressedData = SignalingDataCompression.compressData(data);
     return setSignal(compressedData);
   }

@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [2.0.0] - 2026-02-28
 
 ### Added
-- **getSignalCompressed()** extension method for automatic gzip decompression of signal data
+- **getSignalDecompressed()** extension method for automatic gzip decompression of signal data
 - **Comprehensive test suite** with 33 tests covering all functionality (100% passing)
   - Integration tests with live Ganache blockchain instance
   - Compression edge-case tests (empty strings, large data, UTF-8 support)

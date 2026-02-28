@@ -65,7 +65,7 @@ print('Compressed Data Length: ${(signal[0] as Uint8List).length}');
 print('Creation Time: ${signal[1]}');
 
 // Method 2: Get and automatically decompress
-final decompressed = await contract.getSignalCompressed(offererAddress);
+final decompressed = await contract.getSignalDecompressed(offererAddress);
 print('Decompressed Data: $decompressed');
 ```
 

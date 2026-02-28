@@ -18,7 +18,7 @@ class SignalingDataCompression {
   /// Compress data using gzip format
   ///
   /// Takes raw data (as String or Uint8List) and returns gzip-compressed bytes
-  static Uint8List compressData(dynamic data) {
+  static Uint8List compressData(Object data) {
     List<int> rawBytes;
 
     if (data is String) {
@@ -70,9 +70,9 @@ extension SignalingContractExtension on SignalingContract {
   /// This method allows using an existing Web3Client instance,
   /// which is useful for connection pooling and management.
   static Future<SignalingContract> connectWithClient({
-    required dynamic client,
-    required dynamic contractAddress,
-    dynamic credentials,
+    required Object client,
+    required Object contractAddress,
+    Object? credentials,
   }) async {
     // Use DeployedContract and ContractAbi from web3dart
     final contract = web3.DeployedContract(
@@ -98,7 +98,7 @@ extension SignalingContractExtension on SignalingContract {
   /// final txHash = await sdk.setSignalCompressed(dataToCompress);
   /// print('Transaction: $txHash');
   /// ```
-  Future<String> setSignalCompressed(dynamic data) async {
+  Future<String> setSignalCompressed(Object data) async {
     final compressedData = SignalingDataCompression.compressData(data);
     return setSignal(compressedData);
   }
@@ -113,10 +113,10 @@ extension SignalingContractExtension on SignalingContract {
   ///
   /// Example:
   /// ```dart
-  /// final decompressed = await sdk.getSignalCompressed(offererAddress);
+  /// final decompressed = await sdk.getSignalDecompressed(offererAddress);
   /// print('Decompressed signal: $decompressed');
   /// ```
-  Future<String> getSignalCompressed(EthereumAddress offerer) async {
+  Future<String> getSignalDecompressed(EthereumAddress offerer) async {
     final signalData = await getSignal(offerer);
 
     // Extract signal bytes from struct (first element of the tuple)

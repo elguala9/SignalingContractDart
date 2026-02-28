@@ -16,7 +16,7 @@ Add this to your package's `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  signaling_contract_sdk: ^1.0.2
+  signaling_contract_sdk: ^1.0.3
 ```
 
 ## Quick Start
@@ -48,17 +48,25 @@ final contract = await SignalingContract.deploy(
 ### Set Signal
 
 ```dart
-final txHash = await contract.setSignal(
-  compressedData: Uint8List.fromList([...]),
-);
+// Method 1: Manually compress and set
+final compressedData = SignalingDataCompression.compressData("raw data");
+final txHash = await contract.setSignal(compressedData);
+
+// Method 2: Automatic compression (recommended)
+final txHash = await contract.setSignalCompressed("raw data");
 ```
 
 ### Get Signal
 
 ```dart
+// Method 1: Get compressed signal
 final signal = await contract.getSignal(offererAddress);
-print('Compressed Data: ${signal.compressedData}');
-print('Creation Time: ${signal.creationTime}');
+print('Compressed Data Length: ${(signal[0] as Uint8List).length}');
+print('Creation Time: ${signal[1]}');
+
+// Method 2: Get and automatically decompress
+final decompressed = await contract.getSignalCompressed(offererAddress);
+print('Decompressed Data: $decompressed');
 ```
 
 ## Requirements

@@ -5,6 +5,36 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.3] - 2026-02-28
+
+### Added
+- **getSignalCompressed()** extension method for automatic gzip decompression of signal data
+- **Comprehensive test suite** with 33 tests covering all functionality (100% passing)
+  - Integration tests with live Ganache blockchain instance
+  - Compression edge-case tests (empty strings, large data, UTF-8 support)
+  - Error handling and validation tests
+  - Performance benchmarks showing 99.8% compression ratio on large datasets
+  - Multiple sequential signal update tests
+- Additional test coverage for data type handling (String, Uint8List, List<int>)
+
+### Changed
+- **Stabilized Dart bindings generation**
+  - Moved `signaling_contract_extensions.dart` from generated folder to manual maintenance location
+  - Protected extensions file from regeneration during binding updates
+  - Added documentation about non-generated file status in generator script
+- Updated example code to demonstrate new compression features
+- Enhanced error messages for compression validation
+
+### Fixed
+- Fixed funding account in deployment script for integration tests
+- Improved gzip format validation with proper error handling
+- Fixed struct return type handling in getSignal() calls
+
+### Documentation
+- Updated README.md with new getSignalCompressed() usage examples
+- Added compression performance notes
+- Updated version references in all documentation
+
 ## [1.0.2] - 2026-02-22
 
 ### Added

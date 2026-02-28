@@ -31,7 +31,6 @@ class SignalingDataCompression {
       throw ArgumentError('Data must be String, Uint8List, or List<int>');
     }
 
-    final output = BytesBuilder();
     final codec = GZipCodec();
     final compressed = codec.encode(rawBytes);
 

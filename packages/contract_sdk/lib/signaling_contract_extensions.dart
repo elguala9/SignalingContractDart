@@ -17,9 +17,10 @@ import 'generated/signaling_contract.dart';
 class SignalingDataCompression {
   /// Compress data using gzip format
   ///
-  /// Takes raw data (as String or Uint8List) and returns gzip-compressed bytes
+  /// Accepts String, Uint8List, or List<int> and returns gzip-compressed bytes.
+  /// Type-safe: pass String, Uint8List, or List<int>
   static Uint8List compressData(Object data) {
-    List<int> rawBytes;
+    final List<int> rawBytes;
 
     if (data is String) {
       rawBytes = utf8.encode(data);
@@ -28,12 +29,13 @@ class SignalingDataCompression {
     } else if (data is List<int>) {
       rawBytes = data;
     } else {
-      throw ArgumentError('Data must be String, Uint8List, or List<int>');
+      throw ArgumentError(
+        'Data must be String, Uint8List, or List<int>, got ${data.runtimeType}',
+      );
     }
 
     final codec = GZipCodec();
     final compressed = codec.encode(rawBytes);
-
     return Uint8List.fromList(compressed);
   }
 

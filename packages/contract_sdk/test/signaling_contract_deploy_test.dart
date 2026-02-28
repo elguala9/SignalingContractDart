@@ -358,7 +358,7 @@ void main() {
 
       // Use setSignalCompressed to automatically compress
       print('   Compressing and sending signal...');
-      final txHash = await sdk.setSignalCompressed(rawData);
+      final txHash = await sdk.setSignalCompressed(StringData(rawData));
       print('   Transaction hash: $txHash');
 
       expect(txHash, isNotEmpty);
@@ -399,7 +399,7 @@ void main() {
       print('   Raw data length: ${rawData.length} bytes');
 
       // Manually compress the data
-      final compressedData = SignalingDataCompression.compressData(rawData);
+      final compressedData = SignalingDataCompression.compressData(StringData(rawData));
       print('   Compressed data length: ${compressedData.length} bytes');
       print('   Compression ratio: ${(100 * (1 - compressedData.length / rawData.length)).toStringAsFixed(1)}%');
 
@@ -431,7 +431,7 @@ void main() {
       final testString = 'Test data for compression';
       print('   Original string: "$testString"');
 
-      final compressed = SignalingDataCompression.compressData(testString);
+      final compressed = SignalingDataCompression.compressData(StringData(testString));
       print('   Compressed size: ${compressed.length} bytes');
 
       // Verify gzip format
@@ -447,7 +447,7 @@ void main() {
       // Test with Uint8List
       final testBytes = Uint8List.fromList(utf8.encode('Another test data'));
       final compressedFromBytes =
-          SignalingDataCompression.compressData(testBytes);
+          SignalingDataCompression.compressData(BytesData(testBytes));
       expect(
           SignalingDataCompression.isGzipFormat(compressedFromBytes), isTrue);
       print('   ✓ Compression from Uint8List works');
@@ -472,14 +472,14 @@ void main() {
 
       // Test single character
       final singleChar = 'A';
-      final singleCompressed = SignalingDataCompression.compressData(singleChar);
+      final singleCompressed = SignalingDataCompression.compressData(StringData(singleChar));
       final singleDecompressed = SignalingDataCompression.decompressToString(singleCompressed);
       expect(singleDecompressed, equals(singleChar));
       print('   ✓ Single character compression/decompression works');
 
       // Test long repetitive data (should compress well)
       final repetitiveData = 'A' * 1000;
-      final repCompressed = SignalingDataCompression.compressData(repetitiveData);
+      final repCompressed = SignalingDataCompression.compressData(StringData(repetitiveData));
       final repDecompressed = SignalingDataCompression.decompressToString(repCompressed);
       expect(repDecompressed, equals(repetitiveData));
       final compressionRatio = (100 * (1 - repCompressed.length / repetitiveData.length)).toStringAsFixed(1);
@@ -492,7 +492,7 @@ void main() {
       print('\n🔍 Testing gzip format validation...');
 
       // Valid gzip data
-      final validGzip = SignalingDataCompression.compressData('test');
+      final validGzip = SignalingDataCompression.compressData(StringData('test'));
       expect(SignalingDataCompression.isGzipFormat(validGzip), isTrue);
       print('   ✓ Valid gzip magic bytes detected');
 
@@ -519,7 +519,7 @@ void main() {
 
       // Compress List<int>
       final intList = [72, 101, 108, 108, 111]; // "Hello"
-      final listCompressed = SignalingDataCompression.compressData(intList);
+      final listCompressed = SignalingDataCompression.compressData(IntListData(intList));
       expect(SignalingDataCompression.isGzipFormat(listCompressed), isTrue);
       final listDecompressed = SignalingDataCompression.decompressData(listCompressed);
       expect(listDecompressed, equals(Uint8List.fromList(intList)));
@@ -527,14 +527,14 @@ void main() {
 
       // Compress Uint8List
       final bytes = Uint8List.fromList([1, 2, 3, 4, 5, 255]);
-      final bytesCompressed = SignalingDataCompression.compressData(bytes);
+      final bytesCompressed = SignalingDataCompression.compressData(BytesData(bytes));
       final bytesDecompressed = SignalingDataCompression.decompressData(bytesCompressed);
       expect(bytesDecompressed, equals(bytes));
       print('   ✓ Uint8List compression works');
 
       // Compress special characters
       final special = '🚀 Hello, 世界! 🎉\n\t\r';
-      final specialCompressed = SignalingDataCompression.compressData(special);
+      final specialCompressed = SignalingDataCompression.compressData(StringData(special));
       final specialDecompressed = SignalingDataCompression.decompressToString(specialCompressed);
       expect(specialDecompressed, equals(special));
       print('   ✓ UTF-8 and special characters work');
@@ -617,7 +617,7 @@ void main() {
       for (final (label, data) in testCases) {
         print('   Testing $label data (${data.length} bytes)...');
 
-        final txHash = await sdk.setSignalCompressed(data);
+        final txHash = await sdk.setSignalCompressed(StringData(data));
         expect(txHash, isNotEmpty);
         expect(txHash, startsWith('0x'));
 

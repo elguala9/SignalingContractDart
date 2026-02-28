@@ -49,11 +49,20 @@ final contract = await SignalingContract.deploy(
 
 ```dart
 // Method 1: Manually compress and set
-final compressedData = SignalingDataCompression.compressData("raw data");
+final compressedData = SignalingDataCompression.compressData(
+  StringData("raw data")
+);
 final txHash = await contract.setSignal(compressedData);
 
-// Method 2: Automatic compression (recommended)
-final txHash = await contract.setSignalCompressed("raw data");
+// Method 2: Automatic compression (recommended) - Type-safe with CompressibleData
+final txHash = await contract.setSignalCompressed(
+  StringData("raw data")
+);
+
+// Works with bytes too
+final txHash = await contract.setSignalCompressed(
+  BytesData(myBytes)
+);
 ```
 
 ### Get Signal

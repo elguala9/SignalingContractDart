@@ -70,9 +70,9 @@ extension SignalingContractExtension on SignalingContract {
   /// This method allows using an existing Web3Client instance,
   /// which is useful for connection pooling and management.
   static Future<SignalingContract> connectWithClient({
-    required Object client,
-    required Object contractAddress,
-    Object? credentials,
+    required web3.Web3Client client,
+    required web3.EthereumAddress contractAddress,
+    web3.Credentials? credentials,
   }) async {
     // Use DeployedContract and ContractAbi from web3dart
     final contract = web3.DeployedContract(

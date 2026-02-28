@@ -1,0 +1,82 @@
+name: Test Smart Contract Deployment
+
+on:
+  push:
+    branches: [ develop, main ]
+  pull_request:
+    branches: [ develop, main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Setup Dart
+        uses: dart-lang/setup-dart@v1
+        with:
+          sdk: stable
+
+      - name: Install Node dependencies
+        run: |
+          cd packages/typescript/signaling-contract
+          npm install
+
+      - name: Install Dart dependencies
+        run: |
+          cd packages/contract_sdk
+          dart pub get
+
+      - name: Start Hardhat network
+        run: |
+          cd packages/typescript/signaling-contract
+          npm run network > /tmp/hardhat.log 2>&1 &
+          sleep 8
+          echo "✅ Hardhat network started"
+
+      - name: Build contract
+        run: |
+          cd packages/typescript/signaling-contract
+          npm run build:contracts
+
+      - name: Deploy contract
+        run: |
+          cd packages/typescript/signaling-contract
+          npm run deploySC 2>&1 | tee /tmp/deploy.log
+          CONTRACT_ADDRESS=$(grep "deployed at:" /tmp/deploy.log | grep -oE '0x[a-fA-F0-9]{40}' | head -1)
+          echo "CONTRACT_ADDRESS=$CONTRACT_ADDRESS" >> $GITHUB_ENV
+          echo "✅ Contract deployed at: $CONTRACT_ADDRESS"
+
+      - name: Run Dart integration tests
+        run: |
+          cd packages/contract_sdk
+          export TEST_RPC_URL=http://localhost:8545
+          export TEST_CONTRACT_ADDRESS=${{ env.CONTRACT_ADDRESS }}
+          export TEST_PRIVATE_KEY=0xac0974bec39a17e36ba4a6b4d238ff944bacb476cadeee4c811daadc2bae2807
+          dart test -r expanded --timeout 120s
+
+      - name: Upload deployment logs
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: deployment-logs
+          path: |
+            /tmp/hardhat.log
+            /tmp/deploy.log
+
+      - name: Test Summary
+        if: success()
+        run: |
+          echo "✅ All tests passed!"
+          echo ""
+          echo "Summary:"
+          echo "- Hardhat network: Running on http://localhost:8545"
+          echo "- Contract deployed at: ${{ env.CONTRACT_ADDRESS }}"
+          echo "- Dart tests: PASSED"

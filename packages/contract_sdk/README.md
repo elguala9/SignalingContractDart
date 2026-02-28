@@ -16,7 +16,7 @@ Add this to your package's `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  signaling_contract_sdk: ^1.0.3
+  signaling_contract_sdk: ^2.0.0
 ```
 
 ## Quick Start

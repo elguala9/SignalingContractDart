@@ -71,7 +71,7 @@ extension SignalingContractExtension on SignalingContract {
   /// which is useful for connection pooling and management.
   static Future<SignalingContract> connectWithClient({
     required web3.Web3Client client,
-    required web3.EthereumAddress contractAddress,
+    required EthereumAddress contractAddress,
     web3.Credentials? credentials,
   }) async {
     // Use DeployedContract and ContractAbi from web3dart

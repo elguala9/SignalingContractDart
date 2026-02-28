@@ -460,6 +460,204 @@ void main() {
       print('✅ All compression utility tests passed');
     });
 
+    test('compression handles empty and minimal data', () {
+      print('\n📦 Testing compression with edge-case data...');
+
+      // Test empty string
+      final emptyCompressed = SignalingDataCompression.compressData('');
+      expect(SignalingDataCompression.isGzipFormat(emptyCompressed), isTrue);
+      final emptyDecompressed = SignalingDataCompression.decompressToString(emptyCompressed);
+      expect(emptyDecompressed, equals(''));
+      print('   ✓ Empty string compression/decompression works');
+
+      // Test single character
+      final singleChar = 'A';
+      final singleCompressed = SignalingDataCompression.compressData(singleChar);
+      final singleDecompressed = SignalingDataCompression.decompressToString(singleCompressed);
+      expect(singleDecompressed, equals(singleChar));
+      print('   ✓ Single character compression/decompression works');
+
+      // Test long repetitive data (should compress well)
+      final repetitiveData = 'A' * 1000;
+      final repCompressed = SignalingDataCompression.compressData(repetitiveData);
+      final repDecompressed = SignalingDataCompression.decompressToString(repCompressed);
+      expect(repDecompressed, equals(repetitiveData));
+      final compressionRatio = (100 * (1 - repCompressed.length / repetitiveData.length)).toStringAsFixed(1);
+      print('   ✓ Long repetitive data: $compressionRatio% compression');
+
+      print('✅ Edge-case compression tests passed');
+    });
+
+    test('compression validates gzip magic bytes correctly', () {
+      print('\n🔍 Testing gzip format validation...');
+
+      // Valid gzip data
+      final validGzip = SignalingDataCompression.compressData('test');
+      expect(SignalingDataCompression.isGzipFormat(validGzip), isTrue);
+      print('   ✓ Valid gzip magic bytes detected');
+
+      // Invalid: only first byte
+      final onlyFirst = Uint8List.fromList([0x1f]);
+      expect(SignalingDataCompression.isGzipFormat(onlyFirst), isFalse);
+      print('   ✓ Incomplete gzip header rejected');
+
+      // Invalid: both bytes but wrong
+      final wrongMagic = Uint8List.fromList([0x1f, 0x7f]);
+      expect(SignalingDataCompression.isGzipFormat(wrongMagic), isFalse);
+      print('   ✓ Wrong magic bytes rejected');
+
+      // Invalid: random data
+      final randomData = Uint8List.fromList([0xff, 0xfe, 0xfd, 0xfc]);
+      expect(SignalingDataCompression.isGzipFormat(randomData), isFalse);
+      print('   ✓ Random data rejected');
+
+      print('✅ Gzip validation tests passed');
+    });
+
+    test('compression with different data types', () {
+      print('\n🔀 Testing compression with various data types...');
+
+      // Compress List<int>
+      final intList = [72, 101, 108, 108, 111]; // "Hello"
+      final listCompressed = SignalingDataCompression.compressData(intList);
+      expect(SignalingDataCompression.isGzipFormat(listCompressed), isTrue);
+      final listDecompressed = SignalingDataCompression.decompressData(listCompressed);
+      expect(listDecompressed, equals(Uint8List.fromList(intList)));
+      print('   ✓ List<int> compression works');
+
+      // Compress Uint8List
+      final bytes = Uint8List.fromList([1, 2, 3, 4, 5, 255]);
+      final bytesCompressed = SignalingDataCompression.compressData(bytes);
+      final bytesDecompressed = SignalingDataCompression.decompressData(bytesCompressed);
+      expect(bytesDecompressed, equals(bytes));
+      print('   ✓ Uint8List compression works');
+
+      // Compress special characters
+      final special = '🚀 Hello, 世界! 🎉\n\t\r';
+      final specialCompressed = SignalingDataCompression.compressData(special);
+      final specialDecompressed = SignalingDataCompression.decompressToString(specialCompressed);
+      expect(specialDecompressed, equals(special));
+      print('   ✓ UTF-8 and special characters work');
+
+      print('✅ Multi-type compression tests passed');
+    });
+
+    test('compression error handling', () {
+      print('\n⚠️  Testing error handling for compression...');
+
+      // Test decompression of invalid gzip
+      final invalidGzip = Uint8List.fromList([0x1f, 0x8b, 0xff, 0xff, 0xff, 0xff]);
+      expect(
+        () => SignalingDataCompression.decompressData(invalidGzip),
+        throwsA(isA<Exception>()),
+        reason: 'Invalid gzip data should throw'
+      );
+      print('   ✓ Invalid gzip data throws exception');
+
+      // Test decompression of non-gzip data
+      final nonGzip = Uint8List.fromList([0x48, 0x65, 0x6c, 0x6c, 0x6f]); // "Hello"
+      expect(
+        () => SignalingDataCompression.decompressData(nonGzip),
+        throwsA(isA<Exception>()),
+        reason: 'Non-gzip data should throw'
+      );
+      print('   ✓ Non-gzip data throws exception');
+
+      print('✅ Error handling tests passed');
+    });
+
+    test('large data compression performance', () {
+      print('\n⚡ Testing compression with large data...');
+
+      // Create ~1MB of JSON-like data
+      final largeData = '''
+      {
+        "data": "${List.filled(10000, 'A').join('')}",
+        "repeated": "${List.filled(5000, 'X').join('')}"
+      }
+      ''' * 10;
+
+      final startTime = DateTime.now();
+      final compressed = SignalingDataCompression.compressData(largeData);
+      final compressionTime = DateTime.now().difference(startTime).inMilliseconds;
+
+      final decompressStart = DateTime.now();
+      final decompressed = SignalingDataCompression.decompressToString(compressed);
+      final decompressionTime = DateTime.now().difference(decompressStart).inMilliseconds;
+
+      expect(decompressed, equals(largeData));
+
+      final originalSize = largeData.length;
+      final compressedSize = compressed.length;
+      final ratio = (100 * (1 - compressedSize / originalSize)).toStringAsFixed(1);
+
+      print('   Original size: ${originalSize} bytes');
+      print('   Compressed size: ${compressedSize} bytes');
+      print('   Compression ratio: $ratio%');
+      print('   Compression time: ${compressionTime}ms');
+      print('   Decompression time: ${decompressionTime}ms');
+
+      expect(compressedSize, lessThan(originalSize),
+          reason: 'Compressed should be smaller');
+      expect(decompressed, equals(largeData),
+          reason: 'Decompressed should match original');
+
+      print('✅ Large data compression test passed');
+    });
+
+    test('setSignalCompressed with various data sizes', () async {
+      print('\n📊 Testing setSignalCompressed with different data sizes...');
+
+      final testCases = [
+        ('small', 'Hello'),
+        ('medium', List.filled(500, 'data').join()),
+        ('large', List.filled(5000, 'X').join()),
+      ];
+
+      for (final (label, data) in testCases) {
+        print('   Testing $label data (${data.length} bytes)...');
+
+        final txHash = await sdk.setSignalCompressed(data);
+        expect(txHash, isNotEmpty);
+        expect(txHash, startsWith('0x'));
+
+        await Future.delayed(Duration(seconds: 1));
+
+        final retrieved = await sdk.getSignalCompressed(credentials.address);
+        expect(retrieved, equals(data));
+
+        print('   ✓ $label data round-trip successful');
+      }
+
+      print('✅ Variable size compression tests passed');
+    });
+
+    test('multiple sequential signal updates', () async {
+      print('\n🔄 Testing multiple sequential signal updates...');
+
+      final signals = [
+        'Signal 1: Initial state',
+        'Signal 2: Updated state',
+        'Signal 3: Final state',
+      ];
+
+      for (int i = 0; i < signals.length; i++) {
+        final signal = signals[i];
+        print('   Sending signal ${i + 1}/${signals.length}: $signal');
+
+        final txHash = await sdk.setSignalCompressed(signal);
+        expect(txHash, isNotEmpty);
+
+        await Future.delayed(Duration(seconds: 1));
+
+        final retrieved = await sdk.getSignalCompressed(credentials.address);
+        expect(retrieved, equals(signal),
+            reason: 'Retrieved signal should match the latest one');
+      }
+
+      print('✅ Sequential update test passed');
+    });
+
     test('deploy() accepts polymorphic ContractParameter types', () {
       // This test verifies that deploy() works with the new type-safe parameters
       print(

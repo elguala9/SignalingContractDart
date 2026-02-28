@@ -18,7 +18,8 @@ async function deploy() {
   console.log("✅ Signaling (non-upgradable) deployed at:", contractAddress);
 
   // Fund test account (the private key from the test scripts)
-  const testAccountAddress = "0x754a08c41591E6C06Bd4DEBc67a630b79119A7B7";
+  // This corresponds to: 0x4f3edf983ac636a65a842ce7c78d9aa706d3b113bce9c46f30d7d21715b23b1d
+  const testAccountAddress = "0x90F8bf6A479f320ead074411a4B0e7944Ea8c9C1";
   const fundTx = await deployer.sendTransaction({
     to: testAccountAddress,
     value: ethers.parseEther("10"), // Send 10 ETH

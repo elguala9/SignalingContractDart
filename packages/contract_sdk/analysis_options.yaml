@@ -44,5 +44,12 @@ linter:
     - unnecessary_statements
     - unrelated_type_equality_checks
 
+analyzer:
+  exclude:
+    - lib/generated/**
+  errors:
+    unused_local_variable: ignore
+    comment_references: ignore
+
 # Additional information about this file can be found at
 # https://dart.dev/guides/language/analysis-options

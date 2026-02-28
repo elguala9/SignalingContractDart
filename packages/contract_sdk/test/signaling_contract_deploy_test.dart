@@ -390,8 +390,8 @@ void main() {
       print('✅ setSignalCompressed works correctly with gzip validation');
     });
 
-    test('getSignalCompressed automatically decompresses data', () async {
-      print('\n📥 Testing automatic data decompression with getSignalCompressed...');
+    test('getSignalDecompressed automatically decompresses data', () async {
+      print('\n📥 Testing automatic data decompression with getSignalDecompressed...');
 
       // Create raw uncompressed data
       final rawData = 'This is the test data that will be compressed and retrieved!';
@@ -414,14 +414,14 @@ void main() {
       // Wait for transaction to be mined
       await Future.delayed(Duration(seconds: 2));
 
-      // Use getSignalCompressed to automatically decompress
+      // Use getSignalDecompressed to automatically decompress
       print('   Retrieving and decompressing signal...');
-      final decompressed = await sdk.getSignalCompressed(credentials.address);
+      final decompressed = await sdk.getSignalDecompressed(credentials.address);
       print('   Decompressed data: "$decompressed"');
 
       // Verify the decompressed data matches the original
       expect(decompressed, equals(rawData));
-      print('✅ getSignalCompressed correctly decompresses the data');
+      print('✅ getSignalDecompressed correctly decompresses the data');
     });
 
     test('gzip compression utility functions work correctly', () {
@@ -623,7 +623,7 @@ void main() {
 
         await Future.delayed(Duration(seconds: 1));
 
-        final retrieved = await sdk.getSignalCompressed(credentials.address);
+        final retrieved = await sdk.getSignalDecompressed(credentials.address);
         expect(retrieved, equals(data));
 
         print('   ✓ $label data round-trip successful');
@@ -650,7 +650,7 @@ void main() {
 
         await Future.delayed(Duration(seconds: 1));
 
-        final retrieved = await sdk.getSignalCompressed(credentials.address);
+        final retrieved = await sdk.getSignalDecompressed(credentials.address);
         expect(retrieved, equals(signal),
             reason: 'Retrieved signal should match the latest one');
       }

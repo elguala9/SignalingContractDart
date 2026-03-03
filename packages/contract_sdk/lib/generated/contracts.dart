@@ -1,9 +1,8 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // Auto-generated exports for contract bindings
 // NOTE: signaling_contract_extensions.dart is NOT included here (manually maintained in lib/)
-// ignore: unused_import
+
 import 'dart:typed_data';
-// ignore: unused_import
 import 'package:web3dart/web3dart.dart' as web3;
 
 export 'signaling_contract.dart' hide hexToBytes;

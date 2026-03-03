@@ -1,6 +1,6 @@
 name: signaling_contract_sdk
 description: Type-safe Dart SDK for blockchain signaling smart contracts with auto-generated bindings, Ethereum/EVM support, and comprehensive deployment utilities.
-version: 2.0.0
+version: 1.0.2
 homepage: https://github.com/elguala9/SignalingContractDart
 repository: https://github.com/elguala9/SignalingContractDart
 issue_tracker: https://github.com/elguala9/SignalingContractDart/issues

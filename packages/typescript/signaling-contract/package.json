@@ -1,6 +1,6 @@
 {
   "name": "signaling-contract",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "contract that should replace a signaling server",
   "keywords": [
     "signlaing"

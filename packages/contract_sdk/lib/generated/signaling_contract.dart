@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // Generated from Signaling.sol
-// ignore: unused_local_variable, avoid_print
+
 import 'dart:convert';
 import 'dart:typed_data';
 import 'package:web3dart/web3dart.dart';

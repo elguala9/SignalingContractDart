@@ -1,241 +1,188 @@
-# `signaling-contract`
+# Parresia Contract - Project Overview
 
-Smart contract per il signaling che sostituisce il server di signaling tradizionale.
+A complete blockchain integration toolkit for **Signaling Smart Contracts**, built with TypeScript (Hardhat) and Dart SDK bindings.
 
-## Prerequisiti
+## What This Project Does
 
-- Node.js
-- Docker e Docker Compose (per Ganache)
+This monorepo provides:
 
-## Setup
+1. **Solidity Smart Contract** - A non-upgradable Signaling contract for storing/retrieving compressed signal data
+2. **TypeScript Deployment Layer** - Hardhat scripts for contract compilation and deployment
+3. **Dart SDK** - Type-safe bindings to interact with the contract from Dart applications
+4. **Docker Support** - Containerized deployment for automation
 
-### 1. Installare le dipendenze
+---
 
-```bash
-npm install
+## Project Structure
+
+```
+packages/
+├── typescript/
+│   └── signaling-contract/
+│       ├── contracts/              # Solidity smart contracts
+│       │   └── Signaling.sol
+│       ├── ignition/modules/        # Hardhat deployment modules
+│       │   └── DeploySignaling.ts
+│       ├── scripts/                 # Build & deployment scripts
+│       │   └── generate-dart-bindings.js
+│       ├── test/                    # TypeScript tests
+│       ├── hardhat.config.ts        # Hardhat configuration
+│       ├── Dockerfile               # Docker container definition
+│       └── package.json
+│
+└── contract_sdk/                    # Dart SDK for contract interaction
+    ├── lib/
+    │   ├── signaling_contract_extensions.dart    # Manual extensions (NOT generated)
+    │   ├── signaling_contract_sdk.dart          # Main SDK export
+    │   └── generated/                            # Auto-generated bindings
+    │       ├── signaling_contract.dart
+    │       ├── types.dart
+    │       └── contracts.dart
+    ├── test/                        # Integration tests
+    ├── example/                     # Usage examples
+    └── pubspec.yaml
 ```
 
-### 2. Avviare Ganache (blockchain locale)
+---
 
-```bash
-# Dalla directory root del progetto
-docker-compose up -d evm
-```
+## Key Features
 
-Questo avvierà Ganache con le seguenti configurazioni:
-- RPC URL: `http://localhost:8545`
-- Chain ID: `1337`
-- Accounts: 20 account con 10,000 ETH ciascuno
-- Gas price: 0 (transazioni gratuite)
+### 1. Smart Contract (`Signaling.sol`)
+- **Non-upgradable** - Fixed implementation (no proxy pattern)
+- **Owner-based access** - Contract owner can set/retrieve signals
+- **Data compression** - Supports storing compressed data (gzip)
+- **Event logging** - Emits `SignalEmitted` events for on-chain monitoring
 
-### 3. Compilare i contratti
+**Main Functions:**
+- `setSignal(bytes calldata _signal)` - Store signal data
+- `getSignal() → bytes` - Retrieve stored signal
+- `owner() → address` - Get contract owner
 
-```bash
-npm run build
-```
+### 2. Dart SDK
+Provides type-safe Dart bindings to interact with the contract:
 
-## Deploy
+**Core Classes:**
+- `SignalingContract` - Main contract binding
+- `Web3Client` - Blockchain RPC connection
+- `EthereumAddress` - Address type handling
 
-### Deploy su Ganache
+**Extension Methods:**
+- `setSignalCompressed(data)` - Compress data before storing
+- `getSignalCompressed()` - Decompress retrieved data automatically
+- `watchSignalEmitted()` - Listen to SignalEmitted events in real-time
 
-```bash
-# Deploy del contratto Signaling principale
-npm run deploySC:ganache
+### 3. Deployment
+- Hardhat deployment module (`DeploySignaling.ts`)
+- Automatic Dart binding generation from contract ABI
+- Docker containerization for CI/CD pipelines
 
-# Deploy del contratto SignalingMultiOffer
-npm run deployMultiOfferSC:ganache
-```
+---
 
-### Deploy su localhost (Hardhat network)
+## Development Workflow
 
-```bash
-# Avviare la rete locale Hardhat in un terminale separato
-npm run network
-
-# Poi deployare
-npm run deploySC
-npm run deployMultiOfferSC
-```
-
-## Reti Supportate
-
-- **localhost**: Rete Hardhat locale (Chain ID: 31337)
-- **ganache**: Ganache via Docker (Chain ID: 1337)
-
-## Account di Test
-
-Quando usi Ganache, puoi usare il mnemonic configurato:
-```
-test test test test test test test test test test test junk
-```
-
-Gli account derivati avranno tutti 10,000 ETH per i test.
-
-## Deploy Automatico per Test in CI/CD
-
-Per testare il contratto deployato in una pipeline CI/CD, segui questi step:
-
-### 1. Avviare il nodo Hardhat
-
-Nel tuo CI/CD (GitHub Actions, GitLab CI, ecc.), avvia il nodo Hardhat:
+### Deploy the Contract
 
 ```bash
 cd packages/typescript/signaling-contract
-npm run network > /tmp/hardhat.log 2>&1 &
-sleep 8  # Aspetta che il nodo sia pronto
+
+# Compile contract
+npx hardhat compile
+
+# Deploy to testnet/mainnet
+npx hardhat ignition deploy ./ignition/modules/DeploySignaling.ts --network <network>
 ```
 
-### 2. Deploy del contratto
+### Generate Dart Bindings
+
+Bindings are auto-generated from the contract ABI:
 
 ```bash
-npm run deploySC 2>&1 | tee /tmp/deploy.log
+npm run generate:dart
+# Or via Docker
+npm run docker:build
+npm run docker:push -- <docker-username>
 ```
 
-### 3. Estrai l'indirizzo deployato
+### Run Tests
 
-```bash
-CONTRACT_ADDRESS=$(grep "deployed at:" /tmp/deploy.log | grep -oE '0x[a-fA-F0-9]{40}' | head -1)
-echo "Contract deployed at: $CONTRACT_ADDRESS"
-```
-
-### 4. Esporta variabili di ambiente per i test
-
-```bash
-export TEST_RPC_URL=http://localhost:8545
-export TEST_CONTRACT_ADDRESS=$CONTRACT_ADDRESS
-export TEST_PRIVATE_KEY=0xac0974bec39a17e36ba4a6b4d238ff944bacb476cadeee4c811daadc2bae2807
-```
-
-### 5. Esegui i test Dart
-
+**Dart Unit Tests:**
 ```bash
 cd packages/contract_sdk
 dart test
 ```
 
-### Esempio GitHub Actions
-
-Crea `.github/workflows/test-contract.yml`:
-
-```yaml
-name: Test Smart Contract Deployment
-
-on:
-  push:
-    branches: [ develop, main ]
-  pull_request:
-    branches: [ develop, main ]
-
-jobs:
-  test:
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '18'
-          cache: 'npm'
-
-      - name: Setup Dart
-        uses: dart-lang/setup-dart@v1
-        with:
-          sdk: stable
-
-      - name: Install Node dependencies
-        run: |
-          cd packages/typescript/signaling-contract
-          npm install
-
-      - name: Install Dart dependencies
-        run: |
-          cd packages/contract_sdk
-          dart pub get
-
-      - name: Start Hardhat node
-        run: |
-          cd packages/typescript/signaling-contract
-          npm run network > /tmp/hardhat.log 2>&1 &
-          sleep 8
-          echo "Hardhat node started"
-
-      - name: Deploy contract
-        run: |
-          cd packages/typescript/signaling-contract
-          npm run deploySC 2>&1 | tee /tmp/deploy.log
-          CONTRACT_ADDRESS=$(grep "deployed at:" /tmp/deploy.log | grep -oE '0x[a-fA-F0-9]{40}' | head -1)
-          echo "CONTRACT_ADDRESS=$CONTRACT_ADDRESS" >> $GITHUB_ENV
-          echo "✅ Contract deployed at: $CONTRACT_ADDRESS"
-
-      - name: Run SDK tests
-        run: |
-          cd packages/contract_sdk
-          export TEST_RPC_URL=http://localhost:8545
-          export TEST_CONTRACT_ADDRESS=${{ env.CONTRACT_ADDRESS }}
-          export TEST_PRIVATE_KEY=0xac0974bec39a17e36ba4a6b4d238ff944bacb476cadeee4c811daadc2bae2807
-          dart test -r expanded
-
-      - name: Upload deployment logs
-        if: always()
-        uses: actions/upload-artifact@v3
-        with:
-          name: deployment-logs
-          path: /tmp/*.log
-```
-
-### Test Locali Pre-CI/CD
-
-Per testare localmente prima di pushare:
-
+**TypeScript Tests:**
 ```bash
-# Terminal 1: Avvia il nodo
 cd packages/typescript/signaling-contract
-npm run network
-
-# Terminal 2: Deploy e test
-cd packages/typescript/signaling-contract
-npm run deploySC | tee /tmp/deploy.log
-CONTRACT_ADDRESS=$(grep "deployed at:" /tmp/deploy.log | grep -oE '0x[a-fA-F0-9]{40}')
-
-# Terminal 3: Esegui i test
-cd packages/contract_sdk
-export TEST_RPC_URL=http://localhost:8545
-export TEST_CONTRACT_ADDRESS=$CONTRACT_ADDRESS
-export TEST_PRIVATE_KEY=0xac0974bec39a17e36ba4a6b4d238ff944bacb476cadeee4c811daadc2bae2807
-dart test
+npm test
 ```
 
-### Variabili di Ambiente Necessarie
+---
 
-| Variabile | Valore | Descrizione |
-|-----------|--------|-------------|
-| `TEST_RPC_URL` | `http://localhost:8545` | URL del nodo Hardhat locale |
-| `TEST_CONTRACT_ADDRESS` | `0x...` | Indirizzo del contratto deployato |
-| `TEST_PRIVATE_KEY` | `0xac0974...` | Chiave privata del deployer (account Hardhat #0) |
+## Architecture Decisions
 
-### Account Disponibili (Mnemonic Hardhat)
+### Non-Upgradable Contract
+- ✅ Simplifies security auditing
+- ✅ Reduces complexity
+- ❌ Cannot fix bugs after deployment
+- **Status**: Stable as of Feb 2026
 
-```
-Mnemonic: test test test test test test test test test test test junk
-Chain ID: 31337
+### Dart SDK Structure
+- **Generated Code** (`lib/generated/`) - Auto-created from ABI, regenerated on contract changes
+- **Manual Extensions** (`lib/signaling_contract_extensions.dart`) - Custom utilities, preserved across regenerations
+- **Separation of Concerns** - Clear boundary between generated and manual code
 
-Account #0: 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
-Private Key: 0xac0974bec39a17e36ba4a6b4d238ff944bacb476cadeee4c811daadc2bae2807
-Balance: 10,000 ETH
-```
+### Type Safety
+- ✅ Full web3dart integration
+- ✅ No `dynamic` types (uses sealed classes, interfaces, generics)
+- ✅ Compile-time type checking
+- ✅ Better IDE support and autocomplete
 
-### Troubleshooting
+---
 
-**Il contratto non viene trovato nei test**
-- Verifica che `TEST_CONTRACT_ADDRESS` sia settato correttamente
-- Assicurati che il nodo Hardhat sia in esecuzione (aspetta 8+ secondi)
+## File Descriptions
 
-**Errore "not enough balance"**
-- Usa l'account #0 del mnemonic (ha 10,000 ETH)
-- Non derivare altri account, usano la key dalla variabile di ambiente
+| File | Purpose |
+|------|---------|
+| `Signaling.sol` | Core smart contract logic |
+| `DeploySignaling.ts` | Deployment configuration |
+| `generate-dart-bindings.js` | ABI → Dart code generation |
+| `signaling_contract.dart` | Auto-generated contract binding |
+| `signaling_contract_extensions.dart` | Manual helper methods & utilities |
+| `signaling_contract_sdk.dart` | Main SDK export (public API) |
+| `hardhat.config.ts` | Hardhat network & compiler settings |
+| `Dockerfile` | Container definition for automation |
 
-**Nodo non risponde**
-- Verifica che il file `/tmp/deploy.log` esista
-- Controlla gli errori in `/tmp/hardhat.log`
+---
+
+## Status (March 2026)
+
+| Component | Status | Notes |
+|-----------|--------|-------|
+| Solidity Contract | ✅ Stable | Non-upgradable, fully tested |
+| Deployment Scripts | ✅ Working | Hardhat Ignition configured |
+| Dart SDK | ✅ Stable | Type-safe, auto-generated |
+| Docker Build | ✅ Working | Builds and tags successfully |
+| Docker Push | ⚠️ In Progress | Network issues, retry-able |
+
+---
+
+## Next Steps
+
+1. **Contract Deployment** - Deploy to target network via Hardhat
+2. **SDK Integration** - Use Dart SDK in applications
+3. **Docker Distribution** - Push to Docker Hub for CI/CD use
+4. **Documentation** - Add deployment guides per network
+
+---
+
+## Resources
+
+- 📚 **Hardhat Docs**: https://hardhat.org/
+- 📚 **web3dart Docs**: https://github.com/xclud/web3dart
+- 📚 **Solidity Docs**: https://docs.soliditylang.org/
+- 📦 **Contract ABI**: Auto-generated at `artifacts/contracts/Signaling.sol/Signaling.json`
+
+---
+
+*Last Updated: March 3, 2026*

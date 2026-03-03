@@ -6,45 +6,31 @@ services:
     image: trufflesuite/ganache:latest
     container_name: parresia-contract-ganache
     ports:
-      - "9545:8545"
+      - "8545:8545"
     command:
       - --mnemonic=test test test test test test test test test test test junk
-      - --accounts=20
       - --defaultBalanceEther=1000
+      - --accounts=20
       - --chain.chainId=1337
       - --hardfork=shanghai
       - --deterministic=true
       - --wallet.deterministic=true
       - --hostname=0.0.0.0
-    environment: {}
+    environment:
+      - GANACHE_DETERMINISTIC=true
     networks:
-      - contract-ermes-network
+      - contract-network
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8545"]
       interval: 5s
-      timeout: 5s
-      retries: 30
-      start_period: 30s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
     restart: unless-stopped
     labels:
       description: "Ganache instance for Signaling Contract integration tests"
 
-  # Signaling Contract Deployer - Deploys the Solidity contract to Ganache
-  signaling-contract-deployer:
-    image: elguala96/signaling-contract-deployer:v1.0.2
-    container_name: parresia-contract-deployer
-    depends_on:
-      ganache:
-        condition: service_started
-    environment:
-      RPC_URL: http://ganache:8545
-    networks:
-      - contract-ermes-network
-    restart: "no"
-    labels:
-      description: "Deploys the Signaling Contract to Ganache (runs once then exits)"
-
 networks:
-  contract-ermes-network:
+  contract-network:
     driver: bridge
-    name: parresia-ermes-network
+    name: parresia-contract-network

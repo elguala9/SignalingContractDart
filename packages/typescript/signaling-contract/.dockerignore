@@ -1,0 +1,10 @@
+node_modules
+artifacts
+cache
+typechain-types
+.git
+.gitignore
+README.md
+.env
+.env.local
+deploy.log

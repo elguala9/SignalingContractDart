@@ -1,6 +1,6 @@
 {
   "name": "signaling-contract",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "contract that should replace a signaling server",
   "keywords": [
     "signlaing"
@@ -21,13 +21,20 @@
     "deploySC": "hardhat run ./ignition/modules/DeploySignaling.ts --network localhost",
     "deploySC:ganache": "hardhat run ./ignition/modules/DeploySignaling.ts --network ganache",
     "network": "npx hardhat node",
-    "clean": "hardhat clean && rm -rf ../../../packages/contract_sdk/lib/generated/*"
+    "clean": "hardhat clean && rm -rf ../../../packages/contract_sdk/lib/generated/*",
+    "docker:test": "bash ./test-docker.sh",
+    "docker:test:custom": "bash ./test-docker.sh $IMAGE_NAME $RPC_URL",
+    "docker:push": "bash ./push-to-dockerhub.sh",
+    "docker:build": "docker build -t signaling-contract-deployer:latest .",
+    "docker:run": "docker run -e RPC_URL=${RPC_URL:-http://127.0.0.1:8545} -e PRIVATE_KEY=$PRIVATE_KEY signaling-contract-deployer:latest",
+    "docker:help": "echo 'Docker scripts:\\n  npm run docker:test          - Test Docker image locally\\n  npm run docker:push <username> - Push to Docker Hub\\n  npm run docker:build         - Build Docker image\\n  npm run docker:run           - Run deployed container'"
   },
   "bugs": {
     "url": "https://github.com/elguala9/Ermes/issues"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "@openzeppelin/hardhat-upgrades": "^3.9.1",
     "hardhat": "^2.24.2"
   },
   "dependencies": {

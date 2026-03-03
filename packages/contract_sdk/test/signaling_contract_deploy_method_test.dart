@@ -1,9 +1,6 @@
-import 'dart:convert';
-import 'dart:io';
-import 'dart:typed_data';
+// ignore_for_file: avoid_print
 import 'package:test/test.dart';
 import 'package:http/http.dart' as http;
-import 'package:web3dart/web3dart.dart';
 import 'package:wallet/wallet.dart';
 import 'package:signaling_contract_sdk/signaling_contract_sdk.dart';
 

@@ -46,14 +46,16 @@ const config: HardhatUserConfig = {
       }
     },
     ganache: {
-      url: "http://127.0.0.1:8545",
+      url: process.env.RPC_URL || "http://127.0.0.1:8545",
       chainId: 1337,
-      accounts: {
-        mnemonic: "test test test test test test test test test test test junk",
-        path: "m/44'/60'/0'/0",
-        initialIndex: 0,
-        count: 20
-      },
+      accounts: process.env.PRIVATE_KEY
+        ? [process.env.PRIVATE_KEY]
+        : {
+            mnemonic: "test test test test test test test test test test test junk",
+            path: "m/44'/60'/0'/0",
+            initialIndex: 0,
+            count: 20
+          },
       gas: "auto",
       timeout: 20000
     }

@@ -1,9 +1,9 @@
+// ignore_for_file: avoid_print
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:test/test.dart';
 import 'package:http/http.dart' as http;
-import 'package:web3dart/web3dart.dart';
 import 'package:wallet/wallet.dart';
 import 'package:signaling_contract_sdk/signaling_contract_sdk.dart';
 
@@ -101,7 +101,7 @@ void main() {
 
       // Compress the signal
       final compressedSignalBytes =
-          SignalingDataCompression.compressData(rawSignalBytes);
+          SignalingDataCompression.compressData(BytesData(rawSignalBytes));
       print(
           '   Compressed signal bytes length: ${compressedSignalBytes.length}');
 
@@ -195,12 +195,7 @@ void main() {
       print('\n🔍 Testing getSignal for new address...');
 
       // Use a fresh random address
-      final randomAddressHex = '0x' +
-          DateTime.now()
-              .millisecondsSinceEpoch
-              .toRadixString(16)
-              .padLeft(40, '0')
-              .substring(0, 40);
+      final randomAddressHex = '0x${DateTime.now().millisecondsSinceEpoch.toRadixString(16).padLeft(40, '0').substring(0, 40)}';
       final randomAddress = EthereumAddress.fromHex(randomAddressHex);
       print('   Random address (no signal): ${randomAddress.eip55With0x}');
 
@@ -227,7 +222,7 @@ void main() {
       final testSignalRawBytes =
           Uint8List.fromList(utf8.encode(jsonEncode(testSignalData)));
       final testSignalBytes =
-          SignalingDataCompression.compressData(testSignalRawBytes);
+          SignalingDataCompression.compressData(BytesData(testSignalRawBytes));
 
       // Set up event listening with callback
       print('   Setting up event listener with callback...');
@@ -464,7 +459,7 @@ void main() {
       print('\n📦 Testing compression with edge-case data...');
 
       // Test empty string
-      final emptyCompressed = SignalingDataCompression.compressData('');
+      final emptyCompressed = SignalingDataCompression.compressData(StringData(''));
       expect(SignalingDataCompression.isGzipFormat(emptyCompressed), isTrue);
       final emptyDecompressed = SignalingDataCompression.decompressToString(emptyCompressed);
       expect(emptyDecompressed, equals(''));
@@ -578,7 +573,7 @@ void main() {
       ''' * 10;
 
       final startTime = DateTime.now();
-      final compressed = SignalingDataCompression.compressData(largeData);
+      final compressed = SignalingDataCompression.compressData(StringData(largeData));
       final compressionTime = DateTime.now().difference(startTime).inMilliseconds;
 
       final decompressStart = DateTime.now();
@@ -591,8 +586,8 @@ void main() {
       final compressedSize = compressed.length;
       final ratio = (100 * (1 - compressedSize / originalSize)).toStringAsFixed(1);
 
-      print('   Original size: ${originalSize} bytes');
-      print('   Compressed size: ${compressedSize} bytes');
+      print('   Original size: $originalSize bytes');
+      print('   Compressed size: $compressedSize bytes');
       print('   Compression ratio: $ratio%');
       print('   Compression time: ${compressionTime}ms');
       print('   Decompression time: ${decompressionTime}ms');
@@ -645,7 +640,7 @@ void main() {
         final signal = signals[i];
         print('   Sending signal ${i + 1}/${signals.length}: $signal');
 
-        final txHash = await sdk.setSignalCompressed(signal);
+        final txHash = await sdk.setSignalCompressed(StringData(signal));
         expect(txHash, isNotEmpty);
 
         await Future.delayed(Duration(seconds: 1));

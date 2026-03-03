@@ -192,7 +192,7 @@ Future<void> setSignalWithCompression() async {
     print('Sending signal with automatic compression...');
 
     // Use setSignalCompressed - data is automatically compressed
-    final txHash = await contract.setSignalCompressed(rawData);
+    final txHash = await contract.setSignalCompressed(StringData(rawData));
 
     print('✓ Signal sent with compression!');
     print('  Transaction hash: $txHash\n');

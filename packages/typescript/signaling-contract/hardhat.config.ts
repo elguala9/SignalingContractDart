@@ -2,6 +2,36 @@ import { HardhatUserConfig } from "hardhat/config";
 import "@nomicfoundation/hardhat-toolbox";      // Include Hardhat Ethers, Chai, etc.
 import "@openzeppelin/hardhat-upgrades";          // Plugin OpenZeppelin Upgrades
 
+// Validate PRIVATE_KEY if provided
+const validatePrivateKey = () => {
+  if (process.env.PRIVATE_KEY) {
+    let pk = process.env.PRIVATE_KEY.trim();
+
+    // Strip quotes if present
+    pk = pk.replace(/^["']|["']$/g, '');
+
+    // Validate: must be exactly 64 hex characters (32 bytes)
+    if (pk.length !== 64) {
+      throw new Error(
+        `Invalid PRIVATE_KEY: expected 64 hex characters (32 bytes), got ${pk.length}. ` +
+        `Make sure you're using the raw hex string without "0x" prefix.`
+      );
+    }
+
+    // Validate: must be valid hex
+    if (!/^[0-9a-fA-F]{64}$/.test(pk)) {
+      throw new Error(
+        `Invalid PRIVATE_KEY: must contain only hexadecimal characters (0-9, a-f, A-F)`
+      );
+    }
+
+    return pk;
+  }
+  return undefined;
+};
+
+const privateKey = validatePrivateKey();
+
 const config: HardhatUserConfig = {
   typechain: {
      outDir: "../signaling-sdk/src/typeschain"
@@ -48,8 +78,8 @@ const config: HardhatUserConfig = {
     ganache: {
       url: process.env.RPC_URL || "http://127.0.0.1:8545",
       chainId: 1337,
-      accounts: process.env.PRIVATE_KEY
-        ? [process.env.PRIVATE_KEY]
+      accounts: privateKey
+        ? [privateKey]
         : {
             mnemonic: "test test test test test test test test test test test junk",
             path: "m/44'/60'/0'/0",
@@ -60,7 +90,7 @@ const config: HardhatUserConfig = {
       timeout: 20000
     }
   }
-    
+
 };
 
   export default config;

@@ -348,6 +348,7 @@ function generateTransactionCall(functionName, paramNames) {
       contract: contract,
       function: function,
       parameters: [${paramNames.join(', ')}],
+      maxGas: 200000,
     );
 
     final txHash = await client.sendTransaction(credentials!, transaction, chainId: chainId);

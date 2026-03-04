@@ -36,8 +36,12 @@ melos:
       run: melos exec -- "dart analyze ."
 
     test:
-      description: Run all tests
-      run: melos exec -- "dart test"
+      description: Run all tests (starts local blockchain, deploys contract, runs tests)
+      run: node scripts/test-integration.js
+
+    test:unit:
+      description: Run only unit tests (no blockchain required)
+      run: melos exec -- "dart test test/signaling_contract_test.dart"
 
     format:
       description: Format all packages
@@ -65,3 +69,7 @@ melos:
     test:integration:
       description: Run integration tests (deploys contract and tests with real blockchain)
       run: node scripts/test-integration.js
+
+    test:docker:
+      description: Run integration tests using Docker (Ganache + deployer image)
+      run: node scripts/test-docker.js

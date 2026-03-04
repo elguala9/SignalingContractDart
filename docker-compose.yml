@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # EVM Ganache - Standalone Ethereum test network for integration tests
   ganache:
@@ -12,16 +10,14 @@ services:
       - --defaultBalanceEther=1000
       - --accounts=20
       - --chain.chainId=1337
-      - --hardfork=shanghai
-      - --deterministic=true
-      - --wallet.deterministic=true
-      - --hostname=0.0.0.0
+      - --chain.hardfork=shanghai
+      - --server.host=0.0.0.0
     environment:
       - GANACHE_DETERMINISTIC=true
     networks:
       - contract-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8545"]
+      test: ["CMD-SHELL", "node -e \"const h=require('http');const r=h.request({hostname:'localhost',port:8545,method:'POST',headers:{'Content-Type':'application/json'}},s=>{process.exit(s.statusCode===200?0:1)});r.write('{\"jsonrpc\":\"2.0\",\"method\":\"eth_blockNumber\",\"params\":[],\"id\":1}');r.end();r.on('error',()=>process.exit(1));\""]
       interval: 5s
       timeout: 3s
       retries: 10

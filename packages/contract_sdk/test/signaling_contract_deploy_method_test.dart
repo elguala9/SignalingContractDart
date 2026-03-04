@@ -1,4 +1,5 @@
 // ignore_for_file: avoid_print
+import 'dart:io';
 import 'package:test/test.dart';
 import 'package:http/http.dart' as http;
 import 'package:wallet/wallet.dart';
@@ -11,16 +12,16 @@ void main() {
     late EthPrivateKey credentials;
 
     setUpAll(() async {
-      rpcUrl = 'http://localhost:8545';
+      rpcUrl = Platform.environment['TEST_RPC_URL'] ?? 'http://localhost:8545';
       print('\n🚀 Testing SignalingContract.deploy() method...');
       print('RPC URL: $rpcUrl');
 
       web3Client = Web3Client(rpcUrl, http.Client());
 
       // Use the first Hardhat account
-      credentials = EthPrivateKey.fromHex(
-        '0xac0974bec39a17e36ba4a6b4d238ff944bacb476cadeee4c811daadc2bae2807',
-      );
+      final privateKeyHex = Platform.environment['TEST_PRIVATE_KEY'] ??
+          '0xac0974bec39a17e36ba4a6b4d238ff944bacb476cadeee4c811daadc2bae2807';
+      credentials = EthPrivateKey.fromHex(privateKeyHex);
 
       print('Deployer address: ${credentials.address.eip55With0x}');
     });

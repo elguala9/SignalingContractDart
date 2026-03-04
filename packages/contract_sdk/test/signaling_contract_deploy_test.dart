@@ -7,6 +7,34 @@ import 'package:http/http.dart' as http;
 import 'package:wallet/wallet.dart';
 import 'package:signaling_contract_sdk/signaling_contract_sdk.dart';
 
+/// Wait for a transaction to be mined by polling for its receipt.
+Future<void> waitForTx(Web3Client client, String txHash,
+    {int maxAttempts = 30}) async {
+  for (int i = 0; i < maxAttempts; i++) {
+    final receipt = await client.getTransactionReceipt(txHash);
+    if (receipt != null) return;
+    await Future.delayed(Duration(milliseconds: 500));
+  }
+  throw Exception('Transaction $txHash not mined after $maxAttempts attempts');
+}
+
+/// Read decompressed signal with retry to handle eventual consistency (Ganache).
+/// Returns the decompressed signal when it matches [expected], or the last read value.
+Future<String> readSignalWithRetry(
+  SignalingContract sdk,
+  EthereumAddress address,
+  String expected, {
+  int maxRetries = 15,
+}) async {
+  for (int i = 0; i < maxRetries; i++) {
+    final value = await sdk.getSignalDecompressed(address);
+    if (value == expected) return value;
+    await Future.delayed(Duration(milliseconds: 500));
+  }
+  // Return last read value so the test can report the mismatch
+  return sdk.getSignalDecompressed(address);
+}
+
 void main() {
   group('SignalingContract SDK Integration Tests', () {
     late String rpcUrl;
@@ -21,6 +49,7 @@ void main() {
       rpcUrl = Platform.environment['TEST_RPC_URL'] ?? 'http://localhost:8545';
       contractAddressHex = Platform.environment['TEST_CONTRACT_ADDRESS'] ??
           '0x5FbDB2315678afccb333f8a9c91ff5f8b6e74aaf';
+      // Use deployer account (account 0) which has unlimited funds in Hardhat
       privateKeyHex = Platform.environment['TEST_PRIVATE_KEY'] ??
           '0xac0974bec39a17e36ba4a6b4d238ff944bacb476cadeee4c811daadc2bae2807';
       if (privateKeyHex.isEmpty || privateKeyHex == '0x') {
@@ -45,6 +74,52 @@ void main() {
       // Parse private key and create credentials
       credentials = EthPrivateKey.fromHex(privateKeyHex);
       print('   Credentials address: ${credentials.address.eip55With0x}');
+
+      // Fund the credentials address on the local node
+      // (wallet package may derive a different address than ethers.js)
+      final credAddr = credentials.address.eip55With0x;
+      print('   Funding $credAddr...');
+      final fundClient = http.Client();
+      final rpcUri = Uri.parse(rpcUrl);
+      final headers = {'Content-Type': 'application/json'};
+      final balance = '0x56BC75E2D63100000'; // 100 ETH
+
+      // Try hardhat_setBalance (Hardhat), then evm_setAccountBalance (Ganache)
+      bool funded = false;
+      for (final method in ['hardhat_setBalance', 'evm_setAccountBalance']) {
+        try {
+          final resp = await fundClient.post(rpcUri,
+            headers: headers,
+            body: jsonEncode({
+              'jsonrpc': '2.0', 'method': method,
+              'params': [credAddr, balance], 'id': 1,
+            }),
+          );
+          final body = jsonDecode(resp.body);
+          if (body['error'] == null) {
+            print('   Funded via $method');
+            funded = true;
+            break;
+          }
+        } catch (_) {}
+      }
+      if (!funded) {
+        // Fallback: send ETH from well-known account 0 via personal_sendTransaction
+        print('   Funding via eth_sendTransaction from account 0...');
+        await fundClient.post(rpcUri,
+          headers: headers,
+          body: jsonEncode({
+            'jsonrpc': '2.0', 'method': 'eth_sendTransaction',
+            'params': [{
+              'from': '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
+              'to': credAddr,
+              'value': balance,
+            }], 'id': 1,
+          }),
+        );
+        print('   Funded via eth_sendTransaction');
+      }
+      fundClient.close();
 
       // Connect to existing contract using SDK
       final contractAddress = EthereumAddress.fromHex(contractAddressHex);
@@ -360,7 +435,7 @@ void main() {
       expect(txHash, startsWith('0x'));
 
       // Wait for transaction to be mined
-      await Future.delayed(Duration(seconds: 2));
+      await waitForTx(web3Client, txHash);
 
       // Retrieve the signal and verify it's gzip compressed
       print('   Retrieving compressed signal...');
@@ -407,11 +482,11 @@ void main() {
       expect(txHash, startsWith('0x'));
 
       // Wait for transaction to be mined
-      await Future.delayed(Duration(seconds: 2));
+      await waitForTx(web3Client, txHash);
 
       // Use getSignalDecompressed to automatically decompress
       print('   Retrieving and decompressing signal...');
-      final decompressed = await sdk.getSignalDecompressed(credentials.address);
+      final decompressed = await readSignalWithRetry(sdk, credentials.address, rawData);
       print('   Decompressed data: "$decompressed"');
 
       // Verify the decompressed data matches the original
@@ -616,9 +691,9 @@ void main() {
         expect(txHash, isNotEmpty);
         expect(txHash, startsWith('0x'));
 
-        await Future.delayed(Duration(seconds: 1));
+        await waitForTx(web3Client, txHash);
 
-        final retrieved = await sdk.getSignalDecompressed(credentials.address);
+        final retrieved = await readSignalWithRetry(sdk, credentials.address, data);
         expect(retrieved, equals(data));
 
         print('   ✓ $label data round-trip successful');
@@ -643,9 +718,9 @@ void main() {
         final txHash = await sdk.setSignalCompressed(StringData(signal));
         expect(txHash, isNotEmpty);
 
-        await Future.delayed(Duration(seconds: 1));
+        await waitForTx(web3Client, txHash);
 
-        final retrieved = await sdk.getSignalDecompressed(credentials.address);
+        final retrieved = await readSignalWithRetry(sdk, credentials.address, signal);
         expect(retrieved, equals(signal),
             reason: 'Retrieved signal should match the latest one');
       }

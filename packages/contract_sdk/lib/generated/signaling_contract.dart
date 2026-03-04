@@ -293,6 +293,7 @@ class SignalingContract {
       contract: contract,
       function: function,
       parameters: [compressedSignal],
+      maxGas: 200000,
     );
 
     final txHash = await client.sendTransaction(credentials!, transaction, chainId: chainId);

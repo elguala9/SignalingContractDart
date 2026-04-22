@@ -1,0 +1,14 @@
+name: vite_contract_sdk
+description: Dart SDK for interacting with Signaling smart contract on Vite blockchain.
+version: 1.0.0
+publish_to: none
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  web3dart: ^2.7.2
+  http: ^1.1.0
+
+dev_dependencies:
+  test: ^1.24.0

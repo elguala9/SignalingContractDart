@@ -1,0 +1,21 @@
+{
+  "name": "signaling-contract-vite",
+  "version": "1.0.0",
+  "description": "Signaling smart contract for Vite blockchain (Solidity++)",
+  "author": "Luca Gualandi <lgualandi@omniagroup.it>",
+  "license": "LGPL-3.0-or-later",
+  "scripts": {
+    "compile": "npx vuilder compile contracts/Signaling.solpp",
+    "node": "npx vuilder node",
+    "build:sdk": "node scripts/build-sdk.js"
+  },
+  "dependencies": {
+    "@vite/vuilder": "^0.1.0-alpha.23",
+    "@vite/solppc": "0.8.0-alpha.4"
+  },
+  "devDependencies": {
+    "typescript": "^4.6.2",
+    "ts-node": "^10.7.0",
+    "@types/node": "*"
+  }
+}

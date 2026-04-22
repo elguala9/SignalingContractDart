@@ -1,0 +1,39 @@
+// SPDX-License-Identifier: UNLICENSED
+pragma soliditypp >=0.8.0;
+
+import './ISignaling.solpp';
+
+contract Signaling is ISignaling {
+    address private _owner;
+    mapping(address => Signal) signals;
+
+    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+    constructor(address initialOwner) {
+        _owner = initialOwner;
+        emit OwnershipTransferred(address(0), initialOwner);
+    }
+
+    modifier onlyOwner() {
+        require(msg.sender == _owner, "Ownable: caller is not the owner");
+        _;
+    }
+
+    function owner() public view returns (address) {
+        return _owner;
+    }
+
+    function setSignal(bytes memory compressedSignal) external override {
+        require(compressedSignal.length >= 2, "Invalid compressed data format");
+        require(
+            compressedSignal[0] == 0x1f && compressedSignal[1] == 0x8b,
+            "Data must be in gzip format"
+        );
+        signals[msg.sender] = Signal(compressedSignal, block.timestamp);
+        emit SignalEmitted(msg.sender, compressedSignal, block.timestamp);
+    }
+
+    function getSignal(address offerer) external view override returns (Signal memory) {
+        return signals[offerer];
+    }
+}

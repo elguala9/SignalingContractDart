@@ -47,4 +47,4 @@ Thumbs.db
 *.d.ts.map
 .vexp
 output_test_vite
-.serena
+.serena.*

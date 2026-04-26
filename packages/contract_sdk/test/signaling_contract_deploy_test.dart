@@ -46,7 +46,7 @@ void main() {
 
     setUpAll(() async {
       // Read environment variables (set by test orchestration script)
-      rpcUrl = Platform.environment['TEST_RPC_URL'] ?? 'http://localhost:8545';
+      rpcUrl = Platform.environment['TEST_RPC_URL'] ?? 'http://localhost:23456';
       contractAddressHex = Platform.environment['TEST_CONTRACT_ADDRESS'] ??
           '0x5FbDB2315678afccb333f8a9c91ff5f8b6e74aaf';
       // Use deployer account (account 0) which has unlimited funds in Hardhat

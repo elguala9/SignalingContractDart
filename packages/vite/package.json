@@ -5,9 +5,15 @@
   "author": "Luca Gualandi <lgualandi@omniagroup.it>",
   "license": "LGPL-3.0-or-later",
   "scripts": {
-    "compile": "npx vuilder compile contracts/Signaling.solpp",
+    "generate-abi": "node scripts/generate-abi.js",
+    "compile": "npm run generate-abi && npx vuilder compile contracts/Signaling.solpp",
     "node": "npx vuilder node",
-    "build:sdk": "node scripts/build-sdk.js"
+    "build:sdk": "node scripts/build-sdk.js",
+    "deploy": "node scripts/deploy.js",
+    "deploy-to-chain": "npm run generate-abi && node scripts/deploy-to-chain.js",
+    "test": "node scripts/test.js",
+    "test-on-chain": "npm run generate-abi && node scripts/test-on-chain.js",
+    "deploy:and:test": "npm run compile && npm run deploy && npm run test"
   },
   "dependencies": {
     "@vite/vuilder": "^0.1.0-alpha.23",

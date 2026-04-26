@@ -1,0 +1,23 @@
+# Dart Test Runner - Test Signaling contract using Dart SDK
+FROM dart:latest
+
+WORKDIR /app/packages/contract_sdk
+
+# Copy package files
+COPY packages/contract_sdk/pubspec.yaml packages/contract_sdk/pubspec.lock* ./
+
+# Get dependencies
+RUN dart pub get
+
+# Copy source code
+COPY packages/contract_sdk ./
+COPY packages/vite/deployments /app/packages/vite/deployments
+
+# Default environment
+ENV BLOCKCHAIN_TYPE=vite
+ENV BLOCKCHAIN_URL=http://vite-node:23456
+ENV DEPLOYMENT_PATH=/app/packages/vite/deployments/latest-deployment.json
+
+# Run tests
+RUN chmod +x test_on_chain.dart
+CMD ["dart", "test_on_chain.dart"]

@@ -1,0 +1,8 @@
+{
+  "timestamp": "2026-04-22T16:08:09.301Z",
+  "contractAddress": "vite_8552f811e667939cc30eb3598f74ac569b69392703ad7aeb1e",
+  "network": "vite",
+  "nodeUrl": "http://vite-node:23456",
+  "contractType": "Signaling",
+  "version": "1.0.0"
+}

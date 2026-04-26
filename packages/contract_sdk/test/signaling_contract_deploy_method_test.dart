@@ -12,7 +12,7 @@ void main() {
     late EthPrivateKey credentials;
 
     setUpAll(() async {
-      rpcUrl = Platform.environment['TEST_RPC_URL'] ?? 'http://localhost:8545';
+      rpcUrl = Platform.environment['TEST_RPC_URL'] ?? 'http://localhost:23456';
       print('\n🚀 Testing SignalingContract.deploy() method...');
       print('RPC URL: $rpcUrl');
 

@@ -1,0 +1,33 @@
+# Build stage
+FROM node:18-alpine AS builder
+
+WORKDIR /app/packages/vite
+
+# Copy package files
+COPY packages/vite/package.json packages/vite/package-lock.json* ./
+
+# Install dependencies
+RUN npm install
+
+# Runtime stage
+FROM node:18
+
+WORKDIR /app/packages/vite
+
+# Copy built dependencies from builder (linux/amd64 binaries from alpine may not work on debian,
+# so reinstall in the runtime stage to get correct binaries)
+COPY packages/vite/package.json packages/vite/package-lock.json* ./
+RUN npm install
+
+# Copy source code
+COPY packages/vite ./
+
+# Patch vuilder node_config.json to allow any host (otherwise gvite returns 403
+# for requests not matching its default virtual host filter)
+RUN node -e "const f='/app/packages/vite/node_modules/@vite/vuilder/bin/node_config.json';const fs=require('fs');const c=JSON.parse(fs.readFileSync(f));c.HttpVirtualHosts=['*'];fs.writeFileSync(f,JSON.stringify(c,null,2))"
+
+# gvite HTTP RPC default port
+EXPOSE 23456
+
+# Default command runs vuilder node
+CMD ["npm", "run", "node"]

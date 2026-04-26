@@ -1,0 +1,21 @@
+# Test Runner - Test Signaling contract on blockchain
+FROM node:18-alpine
+
+WORKDIR /app/packages/vite
+
+# Copy package files
+COPY packages/vite/package.json packages/vite/package-lock.json* ./
+
+# Install dependencies
+RUN npm install
+
+# Copy source code
+COPY packages/vite ./
+
+# Default environment
+ENV BLOCKCHAIN_TYPE=vite
+ENV BLOCKCHAIN_URL=http://vite-node:8483
+
+# Generate ABI and run tests
+WORKDIR /app/packages/vite
+CMD ["sh", "-c", "npm run generate-abi && node scripts/test-on-chain.js"]

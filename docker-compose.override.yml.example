@@ -1,0 +1,70 @@
+# docker-compose.override.yml.example
+#
+# Copia questo file in docker-compose.override.yml per override configurazioni
+# Docker Compose automaticamente mergerà questo file con docker-compose.yml
+#
+# cp docker-compose.override.yml.example docker-compose.override.yml
+#
+
+version: '3.8'
+
+services:
+  # ============================================================
+  # ESEMPIO 1: Deployer con Ethereum (non ancora implementato)
+  # ============================================================
+  deployer:
+    environment:
+      # Usa un nodo Ethereum esterno invece di Vite
+      - BLOCKCHAIN_TYPE=ethereum
+      - BLOCKCHAIN_URL=http://ethereum-node:8545  # Cambio blockchain
+
+  test-runner:
+    environment:
+      - BLOCKCHAIN_TYPE=ethereum
+      - BLOCKCHAIN_URL=http://ethereum-node:8545
+
+  # ============================================================
+  # ESEMPIO 2: Deployer con nodo Vite remoto
+  # ============================================================
+  # deployer:
+  #   environment:
+  #     - BLOCKCHAIN_TYPE=vite
+  #     - BLOCKCHAIN_URL=https://testnet-rpc.vite.org  # Nodo remoto
+  #
+  # test-runner:
+  #   environment:
+  #     - BLOCKCHAIN_TYPE=vite
+  #     - BLOCKCHAIN_URL=https://testnet-rpc.vite.org
+
+  # ============================================================
+  # ESEMPIO 3: Vite node con più porte esposte
+  # ============================================================
+  # vite-node:
+  #   ports:
+  #     - "9483:8483"  # Esponi su 9483 invece di 8483
+  #     - "9484:8484"  # Esponi su 9484 invece di 8484
+
+  # ============================================================
+  # ESEMPIO 4: Disabilita health check per debug
+  # ============================================================
+  # vite-node:
+  #   healthcheck:
+  #     disable: true
+  #
+  # deployer:
+  #   depends_on:
+  #     vite-node:
+  #       condition: service_started  # Non aspetta healthy
+
+  # ============================================================
+  # ESEMPIO 5: Aggiungi debug mode
+  # ============================================================
+  # deployer:
+  #   environment:
+  #     - DEBUG=*
+  #     - NODE_ENV=development
+  #
+  # test-runner:
+  #   environment:
+  #     - DEBUG=*
+  #     - NODE_ENV=development

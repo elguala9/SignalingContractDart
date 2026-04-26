@@ -1,32 +1,106 @@
 services:
-  # EVM Ganache - Standalone Ethereum test network for integration tests
-  ganache:
-    image: trufflesuite/ganache:latest
-    container_name: parresia-contract-ganache
+  # 1️⃣ Vite Blockchain Node
+  vite-node:
+    build:
+      context: .
+      dockerfile: Dockerfile.vite
+    container_name: vite-node
     ports:
-      - "8545:8545"
-    command:
-      - --mnemonic=test test test test test test test test test test test junk
-      - --defaultBalanceEther=1000
-      - --accounts=20
-      - --chain.chainId=1337
-      - --chain.hardfork=shanghai
-      - --server.host=0.0.0.0
+      # HTTP RPC port (gvite default)
+      - "23456:23456"
+    volumes:
+      # Mount source code for development
+      - ./packages/vite/contracts:/app/packages/vite/contracts
+      - ./packages/vite/scripts:/app/packages/vite/scripts
     environment:
-      - GANACHE_DETERMINISTIC=true
+      - NODE_ENV=development
+    stdin_open: true
+    tty: true
     networks:
-      - contract-network
+      - signaling-network
     healthcheck:
-      test: ["CMD-SHELL", "node -e \"const h=require('http');const r=h.request({hostname:'localhost',port:8545,method:'POST',headers:{'Content-Type':'application/json'}},s=>{process.exit(s.statusCode===200?0:1)});r.write('{\"jsonrpc\":\"2.0\",\"method\":\"eth_blockNumber\",\"params\":[],\"id\":1}');r.end();r.on('error',()=>process.exit(1));\""]
+      test: ["CMD", "node", "-e", "const h=require('http');const req=h.request({method:'POST',hostname:'localhost',port:23456,headers:{'Content-Type':'application/json'}},r=>{let d='';r.on('data',c=>d+=c);r.on('end',()=>{try{const j=JSON.parse(d);process.exit(j.result&&parseInt(j.result)>0?0:1)}catch(e){process.exit(1)}})});req.on('error',()=>process.exit(1));req.end(JSON.stringify({jsonrpc:'2.0',id:1,method:'ledger_getSnapshotChainHeight',params:null}))"]
       interval: 5s
-      timeout: 3s
-      retries: 10
-      start_period: 10s
-    restart: unless-stopped
-    labels:
-      description: "Ganache instance for Signaling Contract integration tests"
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+
+  # 2️⃣ Smart Contract Deployer
+  deployer:
+    build:
+      context: .
+      dockerfile: Dockerfile.deployer
+    container_name: deployer
+    depends_on:
+      vite-node:
+        condition: service_healthy
+    volumes:
+      # Share deployments directory
+      - ./packages/vite/deployments:/app/packages/vite/deployments
+      - ./packages/vite/contracts:/app/packages/vite/contracts
+      - ./packages/vite/scripts:/app/packages/vite/scripts
+    environment:
+      # Customize blockchain connection here
+      - BLOCKCHAIN_TYPE=vite
+      - BLOCKCHAIN_URL=http://vite-node:23456
+      - NODE_ENV=production
+    networks:
+      - signaling-network
+    restart: on-failure
+
+  # 3️⃣ Test Runner (JavaScript/Node)
+  test-runner:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    container_name: test-runner
+    depends_on:
+      deployer:
+        condition: service_completed_successfully
+      vite-node:
+        condition: service_healthy
+    volumes:
+      # Share deployments directory to access contract address
+      - ./packages/vite/deployments:/app/packages/vite/deployments
+      - ./packages/vite/contracts:/app/packages/vite/contracts
+      - ./packages/vite/scripts:/app/packages/vite/scripts
+      - ./packages/contract_sdk:/app/packages/contract_sdk
+      # Save test results to host
+      - ./output_test_vite:/app/packages/vite/output_test_vite
+    environment:
+      # Customize blockchain connection here
+      - BLOCKCHAIN_TYPE=vite
+      - BLOCKCHAIN_URL=http://vite-node:23456
+      - NODE_ENV=test
+    networks:
+      - signaling-network
+    restart: on-failure
+
+  # 4️⃣ Dart SDK Test Runner
+  dart-test-runner:
+    build:
+      context: .
+      dockerfile: Dockerfile.dart-test
+    container_name: dart-test-runner
+    depends_on:
+      deployer:
+        condition: service_completed_successfully
+      vite-node:
+        condition: service_healthy
+    volumes:
+      # Share deployments directory
+      - ./packages/vite/deployments:/app/packages/vite/deployments
+      - ./packages/contract_sdk:/app/packages/contract_sdk
+      # Save test results to host
+      - ./output_test_vite:/app/packages/contract_sdk/output_test_vite
+    environment:
+      - BLOCKCHAIN_TYPE=vite
+      - BLOCKCHAIN_URL=http://vite-node:23456
+      - DEPLOYMENT_PATH=/app/packages/vite/deployments/latest-deployment.json
+    networks:
+      - signaling-network
+    restart: on-failure
 
 networks:
-  contract-network:
+  signaling-network:
     driver: bridge
-    name: parresia-contract-network
